@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Arduino.h>
-
 #include "vehicle/virtuals/kinematic.hpp"
 #include "vehicle/actuators/motor.hpp"
 

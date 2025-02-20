@@ -1,16 +1,16 @@
-#include "servo.hpp"
-#include <Arduino.h>
-#include "arduinoComponent.hpp"
+#include "vehicle/actuators/servo.hpp"
+#include "vehicle/virtuals/actuator.hpp"
+#include "vehicle/virtuals/arduinoComponent.hpp"
 
-Servo::Servo(byte pin, uint16_t valueReset)
-    : ArduinoComponent(pin),
-      Actuator(valueReset)
+MyServo::MyServo(byte pin, uint16_t valueReset)
+    : Actuator(valueReset),
+      ArduinoComponent(pin)
 {
     this->valueMin = 0;
     this->valueMax = 180;
 }
 
-bool Servo::arm()
+bool MyServo::arm()
 {
     this->isArmed = true;
     this->arduinoServo.attach(this->pin);
@@ -18,7 +18,7 @@ bool Servo::arm()
     return true;
 }
 
-bool Servo::disarm()
+bool MyServo::disarm()
 {
     this->isArmed = false;
     this->arduinoServo.detach();
@@ -26,7 +26,7 @@ bool Servo::disarm()
     return true;
 }
 
-bool Servo::update()
+bool MyServo::update()
 {
     this->arduinoServo.write(this->valueTarget);
     this->valueCurrent = this->valueTarget;
@@ -34,7 +34,7 @@ bool Servo::update()
     return true;
 }
 
-bool Servo::reset()
+bool MyServo::reset()
 {
     this->setValueTarget(this->valueReset);
     this->update();
@@ -42,7 +42,7 @@ bool Servo::reset()
     return true;
 }
 
-void Servo::turn_left()
+void MyServo::turn_left()
 {
     this->setValueTarget(this->valueMin);
     this->update();
@@ -50,7 +50,7 @@ void Servo::turn_left()
     return;
 }
 
-void Servo::turn_right()
+void MyServo::turn_right()
 {
     this->setValueTarget(this->valueMax);
     this->update();

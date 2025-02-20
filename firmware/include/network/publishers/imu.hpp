@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include <ros.h>
 #include <sensor_msgs/Imu.h>
 

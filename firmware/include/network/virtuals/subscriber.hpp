@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include <ros.h>
 #include "vehicle/vehicle.hpp"
 

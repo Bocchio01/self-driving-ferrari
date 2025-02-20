@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include "network/virtuals/service.hpp"
 #include "vehicle/vehicle.hpp"
 #include <ros.h>

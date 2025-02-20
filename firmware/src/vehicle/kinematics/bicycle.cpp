@@ -2,7 +2,7 @@
 #include "vehicle/actuators/servo.hpp"
 #include "vehicle/actuators/motor.hpp"
 
-Bicycle::Bicycle(Servo &steering, Motor &drive)
+Bicycle::Bicycle(MyServo &steering, Motor &drive)
     : steering(steering),
       drive(drive)
 {

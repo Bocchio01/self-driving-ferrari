@@ -1,8 +1,5 @@
 #pragma once
 
-#include <Arduino.h>
-#include <stdint.h>
-
 #include "vehicle/virtuals/actuator.hpp"
 #include "vehicle/virtuals/arduinoComponent.hpp"
 

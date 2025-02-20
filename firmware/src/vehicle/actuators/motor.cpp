@@ -1,8 +1,8 @@
 #include "vehicle/actuators/motor.hpp"
 
 Motor::Motor(byte pin, byte pinDirection1, byte pinDirection2, uint16_t valueReset)
-    : ArduinoComponent(pin),
-      Actuator(valueReset),
+    : Actuator(valueReset),
+      ArduinoComponent(pin),
       pinDirection1(pinDirection1),
       pinDirection2(pinDirection2)
 {

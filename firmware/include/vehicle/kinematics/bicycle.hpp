@@ -6,11 +6,11 @@
 
 class Bicycle : public Kinematic {
 private:
-    Servo& steering;
+    MyServo& steering;
     Motor& drive;
 
 public:
-    Bicycle(Servo& steering, Motor& drive);
+    Bicycle(MyServo& steering, Motor& drive);
     ~Bicycle();
 
     void move(double steeringAngle, double velocity) override;

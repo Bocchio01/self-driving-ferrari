@@ -11,16 +11,16 @@ void Network::bindVehicle(VehicleCore& vehicle) {
     this->vehicle = &vehicle;
 }
 
-void Network::addPublisher(std::shared_ptr<Publisher> publisher) {
-    publishers.push_back(publisher);
+void Network::addPublisher(Publisher& publisher) {
+    publishers.push_back(&publisher);
 }
 
-void Network::addSubscriber(std::shared_ptr<Subscriber> subscriber) {
-    subscribers.push_back(subscriber);
+void Network::addSubscriber(Subscriber& subscriber) {
+    subscribers.push_back(&subscriber);
 }
 
-void Network::addService(std::shared_ptr<Service> service) {
-    services.push_back(service);
+void Network::addService(Service& service) {
+    services.push_back(&service);
 }
 
 void Network::init() {

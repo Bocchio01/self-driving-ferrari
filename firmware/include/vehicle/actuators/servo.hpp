@@ -6,13 +6,13 @@
 #include "vehicle/virtuals/actuator.hpp"
 #include "vehicle/virtuals/arduinoComponent.hpp"
 
-class Servo : public Actuator, public ArduinoComponent
+class MyServo : public Actuator, public ArduinoComponent
 {
 private:
-    ::Servo arduinoServo;
+    Servo arduinoServo;
 
 public:
-    Servo(byte pin, uint16_t valueReset = 90);
+    MyServo(byte pin, uint16_t valueReset = 90);
 
     bool arm() override;
     bool disarm() override;

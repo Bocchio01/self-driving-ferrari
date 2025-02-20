@@ -1,6 +1,8 @@
 #pragma once
 
 #include <ros.h>
+#include <StandardCplusplus.h>
+
 #include <vector>
 #include <memory>
 
@@ -13,9 +15,9 @@ private:
     ros::NodeHandle nh;
     VehicleCore* vehicle;
 
-    std::vector<std::shared_ptr<Publisher>> publishers;
-    std::vector<std::shared_ptr<Subscriber>> subscribers;
-    std::vector<std::shared_ptr<Service>> services;
+    std::vector<Publisher*> publishers;
+    std::vector<Subscriber*> subscribers;
+    std::vector<Service*> services;
 
 public:
     Network();
@@ -24,9 +26,9 @@ public:
 
     void bindVehicle(VehicleCore& vehicle);
 
-    void addPublisher(std::shared_ptr<Publisher> publisher);
-    void addSubscriber(std::shared_ptr<Subscriber> subscriber);
-    void addService(std::shared_ptr<Service> service);
+    void addPublisher(Publisher& publisher);
+    void addSubscriber(Subscriber& subscriber);
+    void addService(Service& service);
 
     void init();
     void spinOnce();

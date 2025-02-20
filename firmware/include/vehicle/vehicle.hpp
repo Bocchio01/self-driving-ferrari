@@ -1,26 +1,25 @@
 #pragma once
-#include <Arduino.h>
 
-struct kinematicsData_t
+typedef struct 
 {
     double wheelBase;
     double wheelTrack;
-};
+} kinematicsData_t;
 
-struct actuatorsData_t
+typedef struct 
 {
     double maxSteeringAngle;
     double maxVelocity;
-};
+} actuatorsData_t;
 
-struct boundingBox_t
+typedef struct 
 {
     double length;
     double width;
     double height;
-};
+} boundingBox_t;
 
-struct VehicleInfo
+typedef struct 
 {
     char name[20];
     const char *kinematicsType;
