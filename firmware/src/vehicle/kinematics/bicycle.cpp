@@ -1,3 +1,4 @@
+#include "vehicle/virtuals/actuator.hpp"
 #include "vehicle/kinematics/bicycle.hpp"
 #include "vehicle/actuators/servo.hpp"
 #include "vehicle/actuators/motor.hpp"
@@ -14,10 +15,9 @@ Bicycle::~Bicycle()
 
 void Bicycle::move(double steeringAngle, double velocity)
 {
-    printf("Bicycle Model\n");
-    printf("Steering\t: %f\n", steeringAngle);
-    printf("Velocity\t: %f\n", velocity);
-
-    // steering.set_angle(steeringAngle);
-    // drive.set_speed(velocity);
+    steering.setValueTarget(Actuator::valueRelativeToAbsolute(steeringAngle, 0, 180));
+    drive.setValueTarget(Actuator::valueRelativeToAbsolute(velocity, -255, 255));
+    
+    steering.update();
+    drive.update();
 }
