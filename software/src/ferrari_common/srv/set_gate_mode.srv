@@ -1,0 +1,3 @@
+uint8 gate_mode # 0: Internal, 1: External
+---
+bool success

@@ -1,3 +1,15 @@
 {
-    "workbench.tree.indent": 32
+    "workbench.tree.indent": 40,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": true,
+    "python.autoComplete.extraPaths": [
+        "/home/bocchio/github/Autonomous-RC-Ferrari/software/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/bocchio/github/Autonomous-RC-Ferrari/software/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ]
 }
