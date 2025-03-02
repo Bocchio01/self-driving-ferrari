@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ferrari_vehicle_adapter</name>
+  <version>0.0.0</version>
+  <description>The ferrari_vehicle_adapter package</description>
+
+  <maintainer email="tommaso.bocchietti@gmail.com">Tommaso Bocchietti</maintainer>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>ferrari_common</depend>
+  
+  <export></export>
+</package>

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ferrari_human_machine_interface)
+project(ferrari_vehicle_adapter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -15,7 +15,6 @@ find_package(catkin REQUIRED
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -38,7 +37,7 @@ find_package(catkin REQUIRED
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     INCLUDE_DIRS include
-    #  LIBRARIES ferrari_vehicle_interface
+    #  LIBRARIES ferrari_vehicle_adapter
     CATKIN_DEPENDS roscpp std_msgs ferrari_common
     #  DEPENDS system_lib
 )
@@ -56,7 +55,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/ferrari_vehicle_interface.cpp
+#   src/${PROJECT_NAME}/ferrari_vehicle_adapter.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -64,11 +63,9 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-
-add_executable(joy_interface src/joy_interface.cpp src/control_interface.cpp)
-add_dependencies(joy_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(joy_interface ${catkin_LIBRARIES})
-
-add_executable(keyboard_interface src/keyboard_interface.cpp src/control_interface.cpp src/KBHit.cpp)
-add_dependencies(keyboard_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(keyboard_interface ${catkin_LIBRARIES})
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(vehicle_adapter src/vehicle_adapter.cpp src/ackermann_adapter.cpp src/differential_drive_adapter.cpp)
+add_dependencies(vehicle_adapter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(vehicle_adapter ${catkin_LIBRARIES})

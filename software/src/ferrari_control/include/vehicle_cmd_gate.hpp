@@ -10,7 +10,7 @@
 #include <ros/ros.h>
 #include "ferrari_common/control_cmd.h"
 #include "ferrari_common/set_gate_mode.h"
-#include "ferrari_common/is_engage.h"
+#include "ferrari_common/get_gate_mode.h"
 
 enum class GateMode
 {
@@ -26,18 +26,17 @@ private:
     ros::Subscriber sub_external_control_cmd;
     ros::Publisher pub_control_cmd;
     ros::ServiceServer srv_set_gate_mode;
-    ros::ServiceServer srv_is_engage;
+    ros::ServiceServer srv_get_gate_mode;
 
     GateMode gate_mode;
-    bool is_engaged;
 
     void internalControlCmdCallback(const ferrari_common::control_cmd::ConstPtr &msg);
     void externalControlCmdCallback(const ferrari_common::control_cmd::ConstPtr &msg);
     void sendControlCmd(const ferrari_common::control_cmd::ConstPtr &msg);
     bool setGateModeCallback(ferrari_common::set_gate_mode::Request &req,
                              ferrari_common::set_gate_mode::Response &res);
-    bool isEngageCallback(ferrari_common::is_engage::Request &req,
-                          ferrari_common::is_engage::Response &res);
+    bool getGateModeCallback(ferrari_common::get_gate_mode::Request &req,
+                             ferrari_common::get_gate_mode::Response &res);
 
 public:
     VehicleCmdGate();

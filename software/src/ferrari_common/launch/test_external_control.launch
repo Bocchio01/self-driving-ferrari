@@ -1,15 +1,14 @@
 <launch>
 
-  <node pkg="ferrari_control" type="vehicle_cmd_gate_node" name="vehicle_cmd_gate" output="screen">
-  </node>
+    <node pkg="joy" type="joy_node" name="joy_node" output="screen"></node>
 
-  <node pkg="joy" type="joy_node" name="joy_node" output="screen">
-  </node>
+    <node pkg="ferrari_control" type="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen"></node>
 
-  <node pkg="ferrari_human_machine_interface" type="joy_to_control_cmd_node" name="human_machine_interface" output="screen">
-  </node>
+    <node pkg="ferrari_human_machine_interface" type="joy_interface" name="joy_interface" output="screen"></node>
+    <node pkg="ferrari_human_machine_interface" type="keyboard_interface" name="keyboard_interface" output="screen"></node>
 
-    <node pkg="rqt_graph" type="rqt_graph" name="rqt_graph" output="screen">
-    </node>
+    <node pkg="ferrari_vehicle_adapter" type="vehicle_adapter" name="vehicle_adapter" output="screen"></node>
+
+    <node pkg="rqt_graph" type="rqt_graph" name="rqt_graph" output="screen"></node>
 
 </launch>
