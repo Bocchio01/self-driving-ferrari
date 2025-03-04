@@ -1,3 +1,0 @@
-Header header
-float32 throttle_left
-float32 throttle_right

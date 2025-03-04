@@ -1,10 +1,15 @@
 #pragma once
 
-#include <ros.h>
+#include "network/ros.h"
+#include "vehicle/vehicle_interface.hpp"
 
-class Publisher {
+class Publisher
+{
+protected:
+    IVehicle *vehicle;
+
 public:
     virtual ~Publisher() {}
-    virtual void init(ros::NodeHandle& nh) = 0;
+    virtual void init(ros::NodeHandle &nh, IVehicle &vehicle) = 0;
     virtual void publish() = 0;
 };

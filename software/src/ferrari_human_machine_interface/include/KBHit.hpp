@@ -19,16 +19,16 @@
 
 class KBHit
 {
+private:
+    bool is_initialized;
+    struct termios termios_original;
+
+    void init(bool disable_echoing = true);
+    void reset();
+
 public:
     KBHit();
     ~KBHit();
 
     int hit();
-
-private:
-    static const int STDIN = 0;
-    bool initialized;
-    struct termios orig_termios; // Store the original terminal settings
-    void init();                 // Initialize terminal settings
-    void reset();                // Restore original terminal settings
 };

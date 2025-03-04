@@ -1,17 +1,29 @@
 #pragma once
 
-#include "vehicle/virtuals/kinematic.hpp"
-#include "vehicle/actuators/motor.hpp"
+#include "ferrari_common/control_cmd.h"
+#include "vehicle/interfaces/kinematic.hpp"
+#include "vehicle/actuators/propulsion.hpp"
 
-class Differential : public Kinematic {
+class KinematicDifferential : public IKinematic
+{
+public:
+    enum class ActuatorPropulsionSide
+    {
+        LEFT,
+        RIGHT
+    };
+
 private:
-    Motor& leftMotor;
-    Motor& rightMotor;
+    ActuatorPropulsion *actuator_propulsion_right;
+    ActuatorPropulsion *actuator_propulsion_left;
 
 public:
-    Differential(Motor& leftMotor, Motor& rightMotor);
-    ~Differential();
+    KinematicDifferential();
 
-    void move(double leftSpeed, double rightSpeed) override;
-    // static std::string type() { return "Differential"; }
+    void bindActuatorPropulsion(ActuatorPropulsion &actuator_propulsion, ActuatorPropulsionSide side);
+
+    void executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd);
+    bool executeArming();
+    bool executeDisarming();
+    bool isArmed();
 };

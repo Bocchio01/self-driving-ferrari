@@ -48,10 +48,8 @@ find_package(catkin REQUIRED
 ## Generate messages in the 'msg' folder
 add_message_files(
     FILES
+    motion_cmd.msg
     control_cmd.msg
-    ackermann_cmd.msg
-    differential_drive_cmd.msg
-    omnidirectional_cmd.msg
 )
 
 ## Generate services in the 'srv' folder

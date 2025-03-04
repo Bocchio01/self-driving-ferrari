@@ -1,37 +1,87 @@
 #pragma once
 
-#include <ros.h>
+#include "network/ros.h"
 #include "network/virtuals/publisher.hpp"
 #include "network/virtuals/subscriber.hpp"
 #include "network/virtuals/service.hpp"
+#include "vehicle/vehicle_interface.hpp"
 
-#define MAX_PUBLISHERS 2  
-#define MAX_SUBSCRIBERS 2  
-#define MAX_SERVICES 1  
-
-class Network {
+class Network
+{
 private:
     ros::NodeHandle nh;
-    VehicleCore* vehicle;
+    IVehicle *vehicle;
 
-    Publisher* publishers[MAX_PUBLISHERS];
-    Subscriber* subscribers[MAX_SUBSCRIBERS];
-    Service* services[MAX_SERVICES];
+    Publisher *publishers[MAX_PUBLISHERS];
+    Subscriber *subscribers[MAX_SUBSCRIBERS];
+    Service *services[MAX_SERVICES];
 
     uint8_t pub_count = 0;
     uint8_t sub_count = 0;
     uint8_t srv_count = 0;
 
 public:
-    Network();
-    Network(VehicleCore& vehicle);
-    ~Network();
+    Network() : vehicle(nullptr) {};
+    ~Network() {};
 
-    void bindVehicle(VehicleCore& vehicle);
-    bool addPublisher(Publisher& publisher);
-    bool addSubscriber(Subscriber& subscriber);
-    bool addService(Service& service);
+    void bindVehicle(IVehicle &vehicle)
+    {
+        this->vehicle = &vehicle;
+    };
 
-    void init(unsigned long baud = 115200);
-    void spinOnce();
+    bool addPublisher(Publisher &publisher)
+    {
+        if (pub_count < MAX_PUBLISHERS)
+        {
+            publishers[pub_count++] = &publisher;
+            return true;
+        }
+        return false;
+    };
+
+    bool addSubscriber(Subscriber &subscriber)
+    {
+        if (sub_count < MAX_SUBSCRIBERS)
+        {
+            subscribers[sub_count++] = &subscriber;
+            return true;
+        }
+        return false;
+    };
+
+    bool addService(Service &service)
+    {
+        if (srv_count < MAX_SERVICES)
+        {
+            services[srv_count++] = &service;
+            return true;
+        }
+        return false;
+    };
+
+    void init(unsigned long baud = 115200)
+    {
+        nh.getHardware()->setBaud(baud);
+        nh.initNode();
+
+        for (uint8_t i = 0; i < pub_count; i++)
+        {
+            publishers[i]->init(nh, *vehicle);
+        }
+
+        for (uint8_t i = 0; i < sub_count; i++)
+        {
+            subscribers[i]->init(nh, *vehicle);
+        }
+
+        for (uint8_t i = 0; i < srv_count; i++)
+        {
+            services[i]->init(nh, *vehicle);
+        }
+    };
+
+    void spinOnce()
+    {
+        nh.spinOnce();
+    }
 };

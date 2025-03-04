@@ -3,13 +3,42 @@
     "tasks": [
         {
             "label": "ROS: central_catkin_make",
-            "type": "catkin_make",
+            "type": "shell",
+            "command": "catkin_make",
             "args": [
                 "-j4",
                 "-DCMAKE_BUILD_TYPE=Debug",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=1"
             ],
             "problemMatcher": "$catkin-gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "ROS: compile_for_arduino",
+            "type": "shell",
+            "command": "rosrun",
+            "args": [
+                "rosserial_arduino",
+                "make_libraries.py",
+                "${workspaceFolderBasename}/../firmware/lib"
+            ],
+            "presentation": {
+                "echo": false,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "ROS: Build & Run",
+            "dependsOn": [
+                "ROS: central_catkin_make",
+                "ROS: compile_for_arduino"
+            ],
+            "dependsOrder": "sequence",
             "group": {
                 "kind": "build",
                 "isDefault": true

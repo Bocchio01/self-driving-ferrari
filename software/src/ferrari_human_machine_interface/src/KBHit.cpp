@@ -4,7 +4,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-KBHit::KBHit() : initialized(false)
+KBHit::KBHit() : is_initialized(false)
 {
     init();
 }
@@ -14,33 +14,40 @@ KBHit::~KBHit()
     reset();
 }
 
-void KBHit::init()
+void KBHit::init(bool disable_echoing)
 {
-    if (!initialized)
+    if (!is_initialized)
     {
         struct termios term;
-        tcgetattr(STDIN, &term);          // Get current terminal settings
-        orig_termios = term;              // Save original terminal settings
-        term.c_lflag &= ~ICANON;          // Disable canonical mode (buffering)
-        tcsetattr(STDIN, TCSANOW, &term); // Apply new settings
-        setbuf(stdin, NULL);              // Disable stdout buffering
-        initialized = true;
+        tcgetattr(STDIN_FILENO, &term);
+        termios_original = term;
+        term.c_lflag &= ~ICANON;
+        tcsetattr(STDIN_FILENO, TCSANOW, &term);
+        setbuf(stdin, NULL);
+
+        if (disable_echoing)
+        {
+            term.c_lflag &= ~ECHO;
+            tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
+        }
+
+        is_initialized = true;
     }
 }
 
 void KBHit::reset()
 {
-    if (initialized)
+    if (is_initialized)
     {
-        tcsetattr(STDIN, TCSANOW, &orig_termios); // Restore original settings
-        setbuf(stdin, NULL);                      // Ensure no buffering
-        initialized = false;
+        tcsetattr(STDIN_FILENO, TCSANOW, &termios_original);
+        setbuf(stdin, NULL);
+        is_initialized = false;
     }
 }
 
 int KBHit::hit()
 {
     int bytesWaiting;
-    ioctl(STDIN, FIONREAD, &bytesWaiting); // Check if there are characters in stdin
+    ioctl(STDIN_FILENO, FIONREAD, &bytesWaiting);
     return bytesWaiting;
 }

@@ -1,73 +1,31 @@
 #pragma once
 
-typedef struct 
-{
-    double wheelBase;
-    double wheelTrack;
-} kinematicsData_t;
+#include "ferrari_common/control_cmd.h"
+#include "vehicle/vehicle_interface.hpp"
 
-typedef struct 
-{
-    double maxSteeringAngle;
-    double maxVelocity;
-} actuatorsData_t;
-
-typedef struct 
-{
-    double length;
-    double width;
-    double height;
-} boundingBox_t;
-
-typedef struct 
-{
-    char name[20];
-    const char *kinematicsType;
-    kinematicsData_t kinematicsData;
-    actuatorsData_t actuatorsData;
-    // sensorsData_t sensorsData;
-    boundingBox_t boundingBox;
-} vehicleInfo_t;
-
-class VehicleCore
+template <class TKinematic>
+class Vehicle : public TKinematic, public IVehicle
 {
 public:
-    virtual ~VehicleCore() {}
-    virtual void move(double input1, double input2) = 0;
-    // virtual std::string getKinematicsType() = 0;
+    virtual ~Vehicle() = default;
+
+    bool executeArming() override
+    {
+        return TKinematic::executeArming();
+    }
+
+    bool executeDisarming() override
+    {
+        return TKinematic::executeDisarming();
+    }
+
+    void executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd) override
+    {
+        TKinematic::executeMotionCommand(motion_cmd);
+    }
+
+    bool isArmed() override
+    {
+        return TKinematic::isArmed();
+    }
 };
-
-
-
-
-template <typename KinematicModel>
-class Vehicle : public VehicleCore
-{
-private:
-    KinematicModel kinematicModel;
-
-public:
-    template <typename... Args>
-    Vehicle(Args &...args);
-
-    void move(double input1, double input2) override;
-
-    // std::string getKinematicsType() override;
-};
-
-template <typename KinematicModel>
-template <typename... Args>
-Vehicle<KinematicModel>::Vehicle(Args &...args)
-    : kinematicModel(args...) {}
-
-template <typename KinematicModel>
-void Vehicle<KinematicModel>::move(double input1, double input2)
-{
-    kinematicModel.move(input1, input2);
-}
-
-// template <typename KinematicModel>
-// std::string Vehicle<KinematicModel>::getKinematicsType()
-// {
-//     return KinematicModel::type();
-// }

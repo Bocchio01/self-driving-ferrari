@@ -7,7 +7,12 @@
     <node pkg="ferrari_human_machine_interface" type="joy_interface" name="joy_interface" output="screen"></node>
     <node pkg="ferrari_human_machine_interface" type="keyboard_interface" name="keyboard_interface" output="screen"></node>
 
-    <node pkg="ferrari_vehicle_adapter" type="vehicle_adapter" name="vehicle_adapter" output="screen"></node>
+    <!-- <node pkg="ferrari_vehicle_adapter" type="vehicle_adapter" name="vehicle_adapter" output="screen"></node> -->
+
+    <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
+        <param name="port" value="/dev/ttyACM0"/>
+        <param name="baud" value="57600"/>
+    </node>
 
     <node pkg="rqt_graph" type="rqt_graph" name="rqt_graph" output="screen"></node>
 

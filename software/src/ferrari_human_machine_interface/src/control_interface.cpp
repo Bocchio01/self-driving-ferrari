@@ -57,9 +57,9 @@ void ControlInterface::publishControlCmd(float vehicle_yaw_rate, float vehicle_l
     ferrari_common::control_cmd control_cmd;
 
     control_cmd.header.stamp = ros::Time::now();
-    control_cmd.vehicle_yaw_rate = vehicle_yaw_rate;
-    control_cmd.vehicle_longitudinal_rate = vehicle_longitudinal_rate;
-    control_cmd.vehicle_lateral_rate = vehicle_lateral_rate;
+    control_cmd.motion_cmd.vehicle_yaw_rate = vehicle_yaw_rate;
+    control_cmd.motion_cmd.vehicle_longitudinal_rate = vehicle_longitudinal_rate;
+    control_cmd.motion_cmd.vehicle_lateral_rate = vehicle_lateral_rate;
     control_cmd.horn = horn;
 
     pub_external_control_cmd.publish(control_cmd);

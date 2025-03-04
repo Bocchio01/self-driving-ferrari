@@ -1,0 +1,3 @@
+float32 vehicle_yaw_rate
+float32 vehicle_longitudinal_rate
+float32 vehicle_lateral_rate

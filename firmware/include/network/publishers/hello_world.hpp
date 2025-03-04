@@ -1,11 +1,9 @@
 #pragma once
 
-#include <ros.h>
+#include "network/ros.h"
 #include <std_msgs/String.h>
 #include "network/virtuals/publisher.hpp"
-
-// Use the F() macro to store topic name in flash memory
-const char hello_world_topic[] PROGMEM = "hello_world";
+#include "vehicle/vehicle_interface.hpp"
 
 class PublisherHelloWorld : public Publisher
 {
@@ -15,16 +13,17 @@ private:
 
 public:
     PublisherHelloWorld()
-        : pub(reinterpret_cast<const char *>(hello_world_topic), &hello_world_msg) {} // Using F() macro for topic name
+        : pub("hello_world", &hello_world_msg) {}
 
-    void init(ros::NodeHandle &nh) override
+    void init(ros::NodeHandle &nh, IVehicle &vehicle) override
     {
+        this->vehicle = &vehicle;
         nh.advertise(pub);
     }
 
     void publish() override
     {
-        hello_world_msg.data = reinterpret_cast<const char *>(F("Hello, World! (From Arduino via ROS)")); // Using F() macro for the message string
+        hello_world_msg.data = "Hello, World! (From Arduino via ROS)";
         pub.publish(&hello_world_msg);
     }
 };

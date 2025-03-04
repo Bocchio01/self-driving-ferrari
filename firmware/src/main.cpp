@@ -1,46 +1,62 @@
 #include <Arduino.h>
-#include <ros.h>
+#include "network/ros.h"
 
 #include "vehicle/vehicle.hpp"
-#include "vehicle/kinematics/bicycle.hpp"
+#include "vehicle/kinematics/ackermann.hpp"
 #include "vehicle/kinematics/differential.hpp"
-#include "vehicle/actuators/servo.hpp"
-#include "vehicle/actuators/motor.hpp"
+#include "vehicle/actuators/steering.hpp"
+#include "vehicle/actuators/propulsion.hpp"
 
 #include "network/network.hpp"
-// #include "network/services/vehicle_info.hpp"
-#include "network/subscribers/turtle1_cmd_vel.hpp"
-// #include "network/publishers/hello_world.hpp"
+#include "network/subscribers/control_cmd.hpp"
+#include "network/publishers/hello_world.hpp"
+#include "network/services/arm_disarm.hpp"
 
-/* Function prototypes */
-void setup();
-void loop();
-
-/* Vehicle */
-MyServo servo(9);
-Motor motor(10, 2, 3);
-Vehicle<Bicycle> vehicle(servo, motor);
-
-/* Network */
-SubscriberTurtle1CmdVel subscriberTurtle1CmdVel;
-// PublisherHelloWorld publisherHelloWorld;
+Vehicle<KinematicAckermann> vehicle;
 Network network;
 
+/* Vehicle actuators ***************************************/
+ActuatorSteering actuator_steering(6, 90, 45, 135);
+ActuatorPropulsion actuator_propulsion(5, 2, 3, 4, 0, 0, 100);
+
+/* Vehicle sensors *****************************************/
+// To be implemented
+
+/* ROS network publishers **********************************/
+PublisherHelloWorld pub_hello_world;
+// PublisherSensorGyro pub_sensor_gyro;
+// PublisherSensorIMU pub_sensor_imu;
+// PublisherSensorLidar pub_sensor_lidar;
+// PublisherSensorSonar pub_sensor_sonar;
+// PublisherSensorGPS pub_sensor_gps;
+// PublisherSensorBattery pub_sensor_battery;
+
+/* ROS network subscribers *********************************/
+SubscriberControlCmd sub_control_cmd;
+
+/* ROS network services ************************************/
+ServiceArmDisarm srv_arm_disarm;
 
 void setup()
 {
-    network.addSubscriber(subscriberTurtle1CmdVel);
-    // network.addPublisher(publisherHelloWorld);
-    
-    servo.arm();
-    motor.arm();
+    /* Vehicle setup ***************************************/
+    vehicle.bindActuatorSteering(actuator_steering);
+    vehicle.bindActuatorPropulsion(actuator_propulsion);
+    // vehicle.addSensor(gyroscope);
+
+    /* ROS network setup ***********************************/
+    network.addPublisher(pub_hello_world);
+    network.addSubscriber(sub_control_cmd);
+    network.addService(srv_arm_disarm);
+
+    /* Network-Vehicle binding and initialization **********/
     network.bindVehicle(vehicle);
     network.init(57600);
 }
 
 void loop()
 {
-    // publisherHelloWorld.publish();
+    // pub_hello_world.publish();
     network.spinOnce();
-    delay(10);
+    delay(50);
 }
