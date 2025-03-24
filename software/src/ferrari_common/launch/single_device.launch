@@ -1,0 +1,10 @@
+<launch>
+    <arg name="port" default="/dev/serial1"/>
+
+    <include file="$(find ferrari_common)/launch/mobile_station.launch">
+        <arg name="port" value="$(arg port)"/>
+    </include>
+
+    <include file="$(find ferrari_common)/launch/ground_station.launch"></include>
+
+</launch>

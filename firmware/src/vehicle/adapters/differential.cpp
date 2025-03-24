@@ -30,20 +30,14 @@ void KinematicDifferential::bindActuatorPropulsion(ActuatorPropulsion &actuator_
 
 void KinematicDifferential::executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd)
 {
-    using Direction = ActuatorPropulsion::Direction;
-
-    uint8_t throttle_left = motion_cmd.vehicle_yaw_rate - motion_cmd.vehicle_longitudinal_rate / 2;
-    uint8_t throttle_right = motion_cmd.vehicle_yaw_rate + motion_cmd.vehicle_longitudinal_rate / 2;
-    Direction motor_direction_left = throttle_left > 0 ? Direction::FORWARD : Direction::BACKWARD;
-    Direction motor_direction_right = throttle_right > 0 ? Direction::FORWARD : Direction::BACKWARD;
+    int16_t throttle_left = motion_cmd.vehicle_yaw_rate - static_cast<int16_t>(motion_cmd.vehicle_longitudinal_rate / 2);
+    int16_t throttle_right = motion_cmd.vehicle_yaw_rate + static_cast<int16_t>(motion_cmd.vehicle_longitudinal_rate / 2);
 
     this->actuator_propulsion_right->setThrottle(throttle_right);
-    this->actuator_propulsion_right->setDirection(motor_direction_right);
-    this->actuator_propulsion_right->update();
+    // this->actuator_propulsion_right->update();
 
     this->actuator_propulsion_left->setThrottle(throttle_left);
-    this->actuator_propulsion_left->setDirection(motor_direction_left);
-    this->actuator_propulsion_left->update();
+    // this->actuator_propulsion_left->update();
 }
 
 bool KinematicDifferential::executeArming()

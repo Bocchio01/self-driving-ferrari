@@ -1,5 +1,8 @@
 {
     "workbench.tree.indent": 40,
+    "workbench.colorCustomizations": {
+        "titleBar.activeBackground": "#003cff99"
+    },
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,

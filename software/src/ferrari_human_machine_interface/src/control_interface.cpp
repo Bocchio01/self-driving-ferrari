@@ -52,11 +52,10 @@ void ControlInterface::handleToggleArmVehicle()
     }
 }
 
-void ControlInterface::publishControlCmd(float vehicle_yaw_rate, float vehicle_longitudinal_rate, float vehicle_lateral_rate, bool horn)
+void ControlInterface::publishControlCmd(int16_t vehicle_yaw_rate, int16_t vehicle_longitudinal_rate, int16_t vehicle_lateral_rate, bool horn)
 {
     ferrari_common::control_cmd control_cmd;
 
-    control_cmd.header.stamp = ros::Time::now();
     control_cmd.motion_cmd.vehicle_yaw_rate = vehicle_yaw_rate;
     control_cmd.motion_cmd.vehicle_longitudinal_rate = vehicle_longitudinal_rate;
     control_cmd.motion_cmd.vehicle_lateral_rate = vehicle_lateral_rate;

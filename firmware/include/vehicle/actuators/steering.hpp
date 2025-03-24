@@ -3,10 +3,10 @@
 #include <Servo.h>
 #include "vehicle/interfaces/actuator.hpp"
 
-typedef int steering_angle_t;
-
 class ActuatorSteering : public IActuator, public Servo
 {
+    typedef int16_t steering_angle_t;
+
 private:
     const uint8_t pin_signal;
 

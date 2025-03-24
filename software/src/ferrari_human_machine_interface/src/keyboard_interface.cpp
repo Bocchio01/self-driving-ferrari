@@ -29,16 +29,16 @@ void KeyboardInterface::run()
                 this->handleToggleArmVehicle();
                 break;
             case static_cast<int>(ArrowKeys::UP):
-                this->throttle = 1.0;
+                this->throttle = +100;
                 break;
             case static_cast<int>(ArrowKeys::DOWN):
-                this->throttle = -1.0;
+                this->throttle = -100;
                 break;
             case static_cast<int>(ArrowKeys::LEFT):
-                this->steering = -1.0;
+                this->steering = -100;
                 break;
             case static_cast<int>(ArrowKeys::RIGHT):
-                this->steering = 1.0;
+                this->steering = +100;
                 break;
             case ' ':
                 this->horn = true;
@@ -48,18 +48,17 @@ void KeyboardInterface::run()
                 break;
             }
 
-            this->publishControlCmd(this->steering, this->throttle, this->steering, this->horn);
+            this->publishControlCmd(this->steering, this->throttle, 0, this->horn);
         }
 
-        ros::spinOnce();
         usleep(10000);
     }
 }
 
 void KeyboardInterface::reset()
 {
-    this->steering = 0.0;
-    this->throttle = 0.0;
+    this->steering = +0;
+    this->throttle = +0;
     this->horn = false;
 }
 

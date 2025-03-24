@@ -18,6 +18,7 @@ public:
     void bindActuatorPropulsion(ActuatorPropulsion &actuator_propulsion);
 
     void executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd);
+    void executeEmercencyStop();
     bool executeArming();
     bool executeDisarming();
     bool isArmed();

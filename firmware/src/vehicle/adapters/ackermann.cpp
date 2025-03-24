@@ -2,6 +2,7 @@
 #include "vehicle/kinematics/ackermann.hpp"
 #include "vehicle/actuators/steering.hpp"
 #include "vehicle/actuators/propulsion.hpp"
+#include <ros.h>
 
 KinematicAckermann::KinematicAckermann()
     : actuator_steering(nullptr),
@@ -26,18 +27,24 @@ void KinematicAckermann::bindActuatorPropulsion(ActuatorPropulsion &actuator_pro
 
 void KinematicAckermann::executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd)
 {
-    using Direction = ActuatorPropulsion::Direction;
+    using steering_angle_t = ActuatorSteering::steering_angle_t;
+    using throttle_t = ActuatorPropulsion::propulsion_throttle_t;
 
-    uint8_t steering_angle = IActuator::map<float>(motion_cmd.vehicle_yaw_rate, -1, 1, this->actuator_steering->steering_angle_minimum, this->actuator_steering->steering_angle_maximum);
-    uint8_t propulsion_throttle = IActuator::map<float>(abs(motion_cmd.vehicle_longitudinal_rate), 0, 1, this->actuator_propulsion->throttle_minimum, this->actuator_propulsion->throttle_maximum);
-    Direction propulsion_direction = motion_cmd.vehicle_longitudinal_rate > 0 ? Direction::FORWARD : Direction::BACKWARD;
+    steering_angle_t steering_angle = map(motion_cmd.vehicle_yaw_rate, -100, +100, this->actuator_steering->steering_angle_minimum, this->actuator_steering->steering_angle_maximum);
+    throttle_t propulsion_throttle = map(motion_cmd.vehicle_longitudinal_rate, -100, +100, this->actuator_propulsion->throttle_minimum, this->actuator_propulsion->throttle_maximum);
 
     this->actuator_steering->setSteeringAngle(steering_angle);
     this->actuator_propulsion->setThrottle(propulsion_throttle);
-    this->actuator_propulsion->setDirection(propulsion_direction);
 
-    this->actuator_steering->update();
-    this->actuator_propulsion->update();
+    // this->actuator_steering->update();
+    // this->actuator_propulsion->update();
+}
+
+void KinematicAckermann::executeEmercencyStop()
+{
+    this->actuator_steering->reset();
+    this->actuator_propulsion->reset();
+    this->actuator_propulsion->brake();
 }
 
 bool KinematicAckermann::executeArming()

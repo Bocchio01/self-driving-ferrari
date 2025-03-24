@@ -9,21 +9,21 @@
 
 #include "network/network.hpp"
 #include "network/subscribers/control_cmd.hpp"
-#include "network/publishers/hello_world.hpp"
+// #include "network/publishers/hello_world.hpp"
 #include "network/services/arm_disarm.hpp"
 
 Vehicle<KinematicAckermann> vehicle;
 Network network;
 
 /* Vehicle actuators ***************************************/
-ActuatorSteering actuator_steering(6, 90, 45, 135);
-ActuatorPropulsion actuator_propulsion(5, 2, 3, 4, 0, 0, 100);
+ActuatorSteering actuator_steering(6, 75, 35, 115);
+ActuatorPropulsion actuator_propulsion(3, 2, 4, 5, 0, -100, +100);
 
 /* Vehicle sensors *****************************************/
 // To be implemented
 
 /* ROS network publishers **********************************/
-PublisherHelloWorld pub_hello_world;
+// PublisherHelloWorld pub_hello_world;
 // PublisherSensorGyro pub_sensor_gyro;
 // PublisherSensorIMU pub_sensor_imu;
 // PublisherSensorLidar pub_sensor_lidar;
@@ -45,7 +45,7 @@ void setup()
     // vehicle.addSensor(gyroscope);
 
     /* ROS network setup ***********************************/
-    network.addPublisher(pub_hello_world);
+    // network.addPublisher(pub_hello_world);
     network.addSubscriber(sub_control_cmd);
     network.addService(srv_arm_disarm);
 
@@ -58,5 +58,10 @@ void loop()
 {
     // pub_hello_world.publish();
     network.spinOnce();
+
+    sub_control_cmd.checkTimeout();
+    actuator_propulsion.update();
+    actuator_steering.update();
+
     delay(50);
 }

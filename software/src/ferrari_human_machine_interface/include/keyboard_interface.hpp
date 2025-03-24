@@ -14,8 +14,8 @@ enum class ArrowKeys
 class KeyboardInterface : public ControlInterface
 {
 private:
-    float steering;
-    float throttle;
+    int16_t steering;
+    int16_t throttle;
     bool horn;
 
     void reset();

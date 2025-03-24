@@ -1,3 +1,2 @@
-Header header
 ferrari_common/motion_cmd motion_cmd
 bool horn

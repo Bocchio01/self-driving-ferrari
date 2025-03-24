@@ -7,19 +7,17 @@ ActuatorPropulsion::ActuatorPropulsion(uint8_t PWMA,
                                        uint8_t STBY,
                                        propulsion_throttle_t throttle_reset,
                                        propulsion_throttle_t throttle_minimum,
-                                       propulsion_throttle_t throttle_maximum,
-                                       Direction direction_reset)
+                                       propulsion_throttle_t throttle_maximum)
     : PWMA(PWMA),
       AIN1(AIN1),
       AIN2(AIN2),
       STBY(STBY),
       throttle(throttle_reset),
-      throttle_current(throttle_reset),
+      acceleration_mode(AccelerationMode::BALANCED),
       throttle_reset(throttle_reset),
       throttle_minimum(throttle_minimum),
       throttle_maximum(throttle_maximum),
-      direction(Direction::FORWARD),
-      direction_reset(direction_reset)
+      rates{50, 100, 250}
 {
     pinMode(this->PWMA, OUTPUT);
     pinMode(this->AIN1, OUTPUT);
@@ -33,12 +31,11 @@ ActuatorPropulsion::~ActuatorPropulsion()
 
 void ActuatorPropulsion::setThrottle(propulsion_throttle_t throttle)
 {
-    this->throttle = min(this->throttle_maximum, max(this->throttle_minimum, throttle));
-}
 
-void ActuatorPropulsion::setDirection(Direction direction)
-{
-    this->direction = direction;
+    propulsion_throttle_t target = constrain(throttle, this->throttle_minimum, this->throttle_maximum);
+    unsigned int duration = static_cast<int>(1000.0f * abs(this->throttle.getValue() - throttle) / rates[static_cast<int>(this->acceleration_mode)]);
+
+    this->throttle.go(target, duration, ramp_mode::SINUSOIDAL_INOUT);
 }
 
 bool ActuatorPropulsion::arm()
@@ -59,20 +56,36 @@ bool ActuatorPropulsion::disarm()
 
 bool ActuatorPropulsion::update()
 {
-    digitalWrite(this->AIN1, this->direction == Direction::FORWARD ? HIGH : LOW);
-    digitalWrite(this->AIN2, this->direction == Direction::BACKWARD ? HIGH : LOW);
-    analogWrite(this->PWMA, this->throttle);
+    propulsion_throttle_t throttle_current = this->throttle.update();
 
-    this->throttle_current = this->throttle;
+    if (throttle_current == 0)
+    {
+        digitalWrite(this->AIN1, LOW);
+        digitalWrite(this->AIN2, LOW);
+    }
+    else
+    {
+        digitalWrite(this->AIN1, throttle_current > 0 ? HIGH : LOW);
+        digitalWrite(this->AIN2, throttle_current < 0 ? HIGH : LOW);
+    }
+
+    analogWrite(this->PWMA, constrain(abs(throttle_current), 0, 255));
 
     return true;
 }
 
 bool ActuatorPropulsion::reset()
 {
-    this->setThrottle(this->throttle_reset);
-    this->setDirection(this->direction_reset);
+    this->throttle.go(this->throttle_reset);
     this->update();
+
+    return true;
+}
+
+bool ActuatorPropulsion::brake()
+{
+    digitalWrite(this->AIN1, HIGH);
+    digitalWrite(this->AIN2, HIGH);
 
     return true;
 }

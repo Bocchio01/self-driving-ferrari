@@ -23,6 +23,7 @@ public:
     Type getType() const { return this->kinematic_type; }
 
     virtual void executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd) = 0;
+    virtual void executeEmercencyStop() = 0;
     virtual bool executeArming() = 0;
     virtual bool executeDisarming() = 0;
     virtual bool isArmed() = 0;

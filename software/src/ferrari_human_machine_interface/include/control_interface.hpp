@@ -20,8 +20,8 @@ public:
 
     void handleSetGateMode();
     void handleToggleArmVehicle();
-    void publishControlCmd(float vehicle_yaw_rate,
-                           float vehicle_longitudinal_rate,
-                           float vehicle_lateral_rate,
+    void publishControlCmd(int16_t vehicle_yaw_rate,
+                           int16_t vehicle_longitudinal_rate,
+                           int16_t vehicle_lateral_rate,
                            bool horn);
 };

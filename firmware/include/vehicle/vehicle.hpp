@@ -24,6 +24,11 @@ public:
         TKinematic::executeMotionCommand(motion_cmd);
     }
 
+    void executeEmercencyStop() override
+    {
+        TKinematic::executeEmercencyStop();
+    }
+
     bool isArmed() override
     {
         return TKinematic::isArmed();

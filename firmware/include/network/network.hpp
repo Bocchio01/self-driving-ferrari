@@ -10,6 +10,7 @@ class Network
 {
 private:
     ros::NodeHandle nh;
+
     IVehicle *vehicle;
 
     Publisher *publishers[MAX_PUBLISHERS];
@@ -83,5 +84,10 @@ public:
     void spinOnce()
     {
         nh.spinOnce();
+    }
+
+    bool isOnline()
+    {
+        return nh.connected();
     }
 };
