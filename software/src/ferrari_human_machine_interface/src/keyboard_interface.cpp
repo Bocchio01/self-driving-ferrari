@@ -1,9 +1,12 @@
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "keyboard_interface.hpp"
 #include "KBHit.hpp"
 
 KeyboardInterface::KeyboardInterface()
 {
+    this->steering = 0;
+    this->throttle = 0;
+    this->horn = false;
 }
 
 KeyboardInterface::~KeyboardInterface()
@@ -14,13 +17,13 @@ void KeyboardInterface::run()
 {
     KBHit kb;
 
-    while (ros::ok())
+    while (rclcpp::ok())
     {
         this->reset();
 
-        if (kb.hit())
+        if (kb.hit()) // Check if a key is pressed
         {
-            switch (getchar())
+            switch (getchar()) // Read the pressed key
             {
             case 'm':
                 this->handleSetGateMode();
@@ -48,25 +51,30 @@ void KeyboardInterface::run()
                 break;
             }
 
+            // Publish control commands based on the inputs
             this->publishControlCmd(this->steering, this->throttle, 0, this->horn);
         }
 
-        usleep(10000);
+        // Sleep to avoid high CPU usage (use rclcpp::Rate instead of usleep)
+        rclcpp::Rate(10).sleep(); // Sleep for 10 Hz
     }
 }
 
 void KeyboardInterface::reset()
 {
-    this->steering = +0;
-    this->throttle = +0;
+    this->steering = 0;
+    this->throttle = 0;
     this->horn = false;
 }
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "keyboard_interface");
-    KeyboardInterface keyboard_interface;
-    keyboard_interface.run();
+    rclcpp::init(argc, argv);
+    auto keyboard_interface = std::make_shared<KeyboardInterface>();
+    keyboard_interface->run();
 
-    ros::spin();
+    // Spin the node to keep the program running
+    rclcpp::spin(keyboard_interface);
+    rclcpp::shutdown();
+    return 0;
 }

@@ -1,6 +1,6 @@
-#include <ros/ros.h>
-#include <sensor_msgs/Joy.h>
-#include "ferrari_common/control_cmd.h"
+#include <rclcpp/rclcpp.hpp>
+#include "sensor_msgs/msg/joy.hpp"
+#include "ferrari_common/msg/control_cmd.hpp"
 #include "control_interface.hpp"
 
 enum class ArrowKeys

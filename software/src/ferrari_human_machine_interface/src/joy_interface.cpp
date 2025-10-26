@@ -1,15 +1,17 @@
 #include "joy_interface.hpp"
 
 JoyInterface::JoyInterface()
+    : ControlInterface("joy_interface")
 {
-    this->sub_joy = nh.subscribe("/joy", 1, &JoyInterface::joyCallback, this);
+    this->sub_joy = this->create_subscription<sensor_msgs::msg::Joy>(
+        "/joy", 10, std::bind(&JoyInterface::joyCallback, this, std::placeholders::_1));
 }
 
 JoyInterface::~JoyInterface()
 {
 }
 
-void JoyInterface::joyCallback(const sensor_msgs::Joy::ConstPtr &joy)
+void JoyInterface::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
 {
     if (joy->buttons[static_cast<int>(JoyButtons::START)])
     {
@@ -23,17 +25,21 @@ void JoyInterface::joyCallback(const sensor_msgs::Joy::ConstPtr &joy)
         return;
     }
 
-    this->publishControlCmd(static_cast<int16_t>(+100 * joy->axes[static_cast<int>(JoyAxes::LEFT_STICK_X)]),
-                            static_cast<int16_t>(+100 * joy->axes[static_cast<int>(JoyAxes::RIGHT_STICK_Y)]),
-                            static_cast<int16_t>(-100 * joy->axes[static_cast<int>(JoyAxes::RIGHT_STICK_X)]),
-                            joy->buttons[static_cast<int>(JoyButtons::TRIANGLE)]);
+    this->publishControlCmd(
+        static_cast<int16_t>(+100 * joy->axes[static_cast<int>(JoyAxes::LEFT_STICK_X)]),
+        static_cast<int16_t>(+100 * joy->axes[static_cast<int>(JoyAxes::RIGHT_STICK_Y)]),
+        static_cast<int16_t>(-100 * joy->axes[static_cast<int>(JoyAxes::RIGHT_STICK_X)]),
+        joy->buttons[static_cast<int>(JoyButtons::TRIANGLE)]);
 
-    usleep(10000);
+    // Sleep to allow other callbacks to process
+    rclcpp::Rate(10).sleep();
 }
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "joy_interface");
-    JoyInterface joy_interface;
-    ros::spin();
+    rclcpp::init(argc, argv);
+    auto joy_interface = std::make_shared<JoyInterface>();
+    rclcpp::spin(joy_interface);
+    rclcpp::shutdown();
+    return 0;
 }

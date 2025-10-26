@@ -1,18 +1,17 @@
-#include <ros/ros.h>
-#include <sensor_msgs/Joy.h>
-#include "ferrari_common/control_cmd.h"
-#include "ferrari_common/get_gate_mode.h"
-#include "ferrari_common/set_gate_mode.h"
-#include "ferrari_common/toggle_arm_vehicle.h"
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/joy.hpp>
+#include "ferrari_common/msg/control_cmd.hpp"
+#include "ferrari_common/srv/get_gate_mode.hpp"
+#include "ferrari_common/srv/set_gate_mode.hpp"
+#include "ferrari_common/srv/toggle_arm_vehicle.hpp"
 
-class ControlInterface
+class ControlInterface : public rclcpp::Node
 {
 protected:
-    ros::NodeHandle nh;
-    ros::Publisher pub_external_control_cmd;
-    ros::ServiceClient srv_get_gate_mode;
-    ros::ServiceClient srv_set_gate_mode;
-    ros::ServiceClient srv_toggle_arm_vehicle;
+    rclcpp::Publisher<ferrari_common::msg::ControlCmd>::SharedPtr pub_external_control_cmd;
+    rclcpp::Client<ferrari_common::srv::GetGateMode>::SharedPtr srv_get_gate_mode;
+    rclcpp::Client<ferrari_common::srv::SetGateMode>::SharedPtr srv_set_gate_mode;
+    rclcpp::Client<ferrari_common::srv::ToggleArmVehicle>::SharedPtr srv_toggle_arm_vehicle;
 
 public:
     ControlInterface();

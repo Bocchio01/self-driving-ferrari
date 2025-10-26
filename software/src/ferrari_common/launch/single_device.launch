@@ -1,10 +1,14 @@
+<?xml version="1.0"?>
 <launch>
-    <arg name="port" default="/dev/serial1"/>
+    <!-- Declare an argument for port -->
+    <let name="port" value="/dev/serial1"/>
 
+    <!-- Include mobile_station.launch from ferrari_common -->
     <include file="$(find ferrari_common)/launch/mobile_station.launch">
-        <arg name="port" value="$(arg port)"/>
+        <let name="port" value="$(var port)"/>
     </include>
 
-    <include file="$(find ferrari_common)/launch/ground_station.launch"></include>
+    <!-- Include ground_station.launch from ferrari_common -->
+    <include file="$(find ferrari_common)/launch/ground_station.launch"/>
 
 </launch>

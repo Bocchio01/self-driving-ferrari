@@ -1,6 +1,6 @@
-#include <ros/ros.h>
-#include <sensor_msgs/Joy.h>
-#include "ferrari_common/control_cmd.h"
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/joy.hpp>
+#include "ferrari_common/msg/control_cmd.hpp"
 #include "control_interface.hpp"
 
 enum class JoyButtons
@@ -30,9 +30,9 @@ enum class JoyAxes
 class JoyInterface : public ControlInterface
 {
 private:
-    ros::Subscriber sub_joy;
+    rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr sub_joy;
 
-    void joyCallback(const sensor_msgs::Joy::ConstPtr &joy);
+    void joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy);
 
 public:
     JoyInterface();

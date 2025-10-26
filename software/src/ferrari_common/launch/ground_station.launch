@@ -1,14 +1,15 @@
+<?xml version="1.0"?>
 <launch>
-
-    <node pkg="joy" type="joy_node" name="joy_node" output="screen">
-        <param name="deadzone" value="0.05" />
-        <param name="autorepeat_rate" value="1.0" />
-        <param name="coalesce_interval" value="0.001" />
+    <!-- Launch joy_node from joy package -->
+    <node pkg="joy" exec="joy_node" name="joy_node" output="screen">
+        <param name="deadzone" value="0.05"/>
+        <param name="autorepeat_rate" value="1.0"/>
+        <param name="coalesce_interval" value="0.001"/>
     </node>
 
-    <node pkg="ferrari_human_machine_interface" type="joy_interface" name="joy_interface" output="screen"></node>
-    <node pkg="ferrari_human_machine_interface" type="keyboard_interface" name="keyboard_interface" output="screen"></node>
+    <!-- Launch joy_interface from ferrari_human_machine_interface -->
+    <node pkg="ferrari_human_machine_interface" exec="joy_interface" name="joy_interface" output="screen"/>
 
-    <!-- <node pkg="rqt_graph" type="rqt_graph" name="rqt_graph" output="screen"></node> -->
-
+    <!-- Launch keyboard_interface from ferrari_human_machine_interface -->
+    <node pkg="ferrari_human_machine_interface" exec="keyboard_interface" name="keyboard_interface" output="screen"/>
 </launch>

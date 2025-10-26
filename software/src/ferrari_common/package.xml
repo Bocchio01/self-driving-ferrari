@@ -1,19 +1,23 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>ferrari_common</name>
   <version>0.0.0</version>
-  <description>The ferrari_common package</description>
+  <description>The ferrari_common interface package</description>
 
   <maintainer email="tommaso.bocchietti@gmail.com">Tommaso Bocchietti</maintainer>
-
   <license>MIT</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <!-- Buildtool dependency -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- Dependencies for interface generation -->
+  <build_depend>rosidl_default_generators</build_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <!-- Runtime dependencies -->
   <depend>std_msgs</depend>
-  
-  <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend>
 
-  <export></export>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

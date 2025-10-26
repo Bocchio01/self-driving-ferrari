@@ -1,11 +1,14 @@
+<?xml version="1.0"?>
 <launch>
-    <arg name="port" default="/dev/serial1" />
+    <!-- Declare an argument for port -->
+    <let name="port" value="/dev/serial1"/>
 
-    <node pkg="ferrari_control" type="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen"></node>
+    <!-- Launch vehicle_cmd_gate node -->
+    <node pkg="ferrari_control" exec="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen"/>
 
-    <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
-        <param name="port" value="$(arg port)"/>
+    <!-- Launch serial_node from rosserial_python package -->
+    <node pkg="rosserial_python" exec="serial_node.py" name="serial_node" output="screen">
+        <param name="port" value="$(var port)"/>
         <param name="baud" value="57600"/>
     </node>
-
 </launch>

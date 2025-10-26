@@ -1,74 +1,31 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.14)  # ROS 2 recommends at least CMake 3.14
 project(ferrari_human_machine_interface)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+# Require C++17 for ROS 2
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED
-    roscpp
-    std_msgs
-    ferrari_common
-)
+# Find ROS 2 packages
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(ferrari_common REQUIRED)  # Your interface package
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
-
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
-
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-    INCLUDE_DIRS include
-    #  LIBRARIES ferrari_vehicle_interface
-    CATKIN_DEPENDS roscpp std_msgs ferrari_common
-    #  DEPENDS system_lib
-)
-
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-)
-
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/ferrari_vehicle_interface.cpp
-# )
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-
+# Declare executables
 add_executable(joy_interface src/joy_interface.cpp src/control_interface.cpp)
-add_dependencies(joy_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(joy_interface ${catkin_LIBRARIES})
-
 add_executable(keyboard_interface src/keyboard_interface.cpp src/control_interface.cpp src/KBHit.cpp)
-add_dependencies(keyboard_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(keyboard_interface ${catkin_LIBRARIES})
+
+# Add dependencies for executables
+ament_target_dependencies(joy_interface rclcpp std_msgs ferrari_common)
+ament_target_dependencies(keyboard_interface rclcpp std_msgs ferrari_common)
+
+# Link libraries (No need to manually link rclcpp here as ament_target_dependencies handles this)
+# target_link_libraries(joy_interface rclcpp::rclcpp)  # Not needed in ROS 2
+# target_link_libraries(keyboard_interface rclcpp::rclcpp)  # Not needed in ROS 2
+
+# Install executables
+install(TARGETS joy_interface keyboard_interface
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+ament_package()  # Finalize the package setup
