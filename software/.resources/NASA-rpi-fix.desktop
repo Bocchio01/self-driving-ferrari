@@ -1,0 +1,6 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=NASA RaspberryPi Fix Serial Connection
+Type=Link
+URL=https://github.com/nasa-jpl/osr-rover-code/blob/foxy-devel/setup/rpi.md
+Icon=text-html

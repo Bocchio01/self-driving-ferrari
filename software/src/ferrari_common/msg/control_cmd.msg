@@ -1,2 +1,0 @@
-ferrari_common/motion_cmd motion_cmd
-bool horn

@@ -1,3 +1,0 @@
-int16 vehicle_yaw_rate
-int16 vehicle_longitudinal_rate
-int16 vehicle_lateral_rate

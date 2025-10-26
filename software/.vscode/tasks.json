@@ -2,47 +2,25 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "ROS: central_catkin_make",
-            "type": "shell",
-            "command": "catkin_make",
+            "type": "colcon",
             "args": [
-                "-j4",
+                "build",
+                "--symlink-install",
+                "--event-handlers",
+                "console_cohesion+",
+                "--base-paths",
+                "/home/bocchio/Documents/github/self-driving-ferrari/software",
+                "--cmake-args",
                 "-DCMAKE_BUILD_TYPE=Debug",
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=1"
+                "--cmake-args",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "--no-warn-unused-cli"
             ],
-            "problemMatcher": "$catkin-gcc",
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
-            "label": "ROS: compile_for_arduino",
-            "type": "shell",
-            "command": "rosrun",
-            "args": [
-                "rosserial_arduino",
-                "make_libraries.py",
-                "${workspaceFolderBasename}/../firmware/lib"
+            "problemMatcher": [
+                "$colcon-gcc"
             ],
-            "presentation": {
-                "echo": false,
-                "reveal": "never",
-                "focus": false,
-                "panel": "shared"
-            }
-        },
-        {
-            "label": "ROS: Build & Run",
-            "dependsOn": [
-                "ROS: central_catkin_make",
-                "ROS: compile_for_arduino"
-            ],
-            "dependsOrder": "sequence",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "group": "build",
+            "label": "colcon: Colcon Build Debug"
         }
     ]
 }

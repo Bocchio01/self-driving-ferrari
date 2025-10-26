@@ -1,30 +1,30 @@
 {
-    "workbench.tree.indent": 40,
     "workbench.colorCustomizations": {
-        "titleBar.activeBackground": "#ff95008c"
+        "titleBar.activeBackground": "#ea5a0c80"
     },
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true,
-    "editor.detectIndentation": false,
-    "editor.formatOnSave": true,
+    "ROS2.distro": "lyrical",
     "python.autoComplete.extraPaths": [
-        "/home/bocchio/github/Autonomous-RC-Ferrari/software/devel/lib/python3/dist-packages",
-        "/opt/ros/noetic/lib/python3/dist-packages"
+        "/opt/ros/lyrical/opt/gz_math_vendor/lib/python",
+        "/opt/ros/lyrical/lib/python3.14/site-packages"
     ],
     "python.analysis.extraPaths": [
-        "/home/bocchio/github/Autonomous-RC-Ferrari/software/devel/lib/python3/dist-packages",
-        "/opt/ros/noetic/lib/python3/dist-packages"
+        "/opt/ros/lyrical/opt/gz_math_vendor/lib/python",
+        "/opt/ros/lyrical/lib/python3.14/site-packages"
     ],
+    "files.exclude": {
+        "build": true,
+        "install": true,
+        "log": true,
+        "src/ferrari_localization": true,
+        "src/ferrari_mapping": true,
+        "src/ferrari_perception": true,
+        "src/ferrari_planning": true,
+        "src/ferrari_sensing": true,
+        "src/ferrari_vehicle": true,
+    },
     "files.associations": {
-        "array": "cpp",
-        "string": "cpp",
-        "string_view": "cpp",
-        "*.tcc": "cpp",
-        "unordered_map": "cpp",
-        "fstream": "cpp",
-        "istream": "cpp",
-        "ostream": "cpp",
-        "sstream": "cpp",
-        "numeric": "cpp"
-    }
+        "*.urdf": "xml",
+        "*.xacro": "xml"
+    },
+    "cmake.ignoreCMakeListsMissing": true
 }

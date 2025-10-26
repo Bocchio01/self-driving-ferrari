@@ -1,8 +1,0 @@
-context: conan
-configurations:
-#  - any:
-#      build_type: {Debug, RelWithDebInfo, Release}
-#      shared: {False, True}
-  - imports:
-      - linux_defaults_build_profile # build supports build / host context -> conan 2 ready!
-#      - linux_defaults # use this if you cannot build with build / host context
