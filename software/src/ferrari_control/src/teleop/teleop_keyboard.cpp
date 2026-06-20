@@ -1,23 +1,21 @@
-#include "ferrari_control/keyboard_teleop.hpp"
+#include "ferrari_control/teleop/teleop_keyboard.hpp"
 
 #include <cstdio>
 #include <functional>
 
 using namespace std::chrono_literals;
 
-KeyboardTeleopNode::KeyboardTeleopNode(const rclcpp::NodeOptions &options)
-    : TeleopBase("keyboard_teleop_node", options),
+TeleopKeyboardNode::TeleopKeyboardNode(const rclcpp::NodeOptions &options)
+    : TeleopBase("teleop_keyboard_node", options),
       kb_()
 {
-    timer_ = this->create_wall_timer(50ms, std::bind(&KeyboardTeleopNode::timerCallback, this));
+    timer_ = this->create_wall_timer(50ms, std::bind(&TeleopKeyboardNode::timerCallback, this));
 
-    RCLCPP_INFO(this->get_logger(), "keyboard_teleop_node started");
+    RCLCPP_INFO(this->get_logger(), "teleop_keyboard_node started");
 }
 
-void KeyboardTeleopNode::timerCallback()
+void TeleopKeyboardNode::timerCallback()
 {
-    bool deadman_pressed = false;
-    bool movement_command_active = false;
     double normalized_speed = 0.0;
     double normalized_steering = 0.0;
 
@@ -28,28 +26,21 @@ void KeyboardTeleopNode::timerCallback()
         {
         case KeyCode::Up:
             normalized_speed = +1.0;
-            movement_command_active = true;
             break;
         case KeyCode::Down:
             normalized_speed = -1.0;
-            movement_command_active = true;
             break;
         case KeyCode::Left:
-            normalized_steering = +1.0;
-            movement_command_active = true;
+            normalized_steering = -1.0;
             break;
         case KeyCode::Right:
-            normalized_steering = -1.0;
-            movement_command_active = true;
+            normalized_steering = +1.0;
             break;
-        case KeyCode::Space:
-            deadman_pressed = true;
+        case KeyCode::ToggleEngageVehicle:
+            requestToggleEngageVehicle();
             break;
-        case KeyCode::ArmToggle:
-            requestArmToggle();
-            break;
-        case KeyCode::ModeToggle:
-            requestModeToggle();
+        case KeyCode::SwitchGateMode:
+            requestSwitchGateMode();
             break;
         case KeyCode::Unknown:
         default:
@@ -57,16 +48,10 @@ void KeyboardTeleopNode::timerCallback()
         }
     }
 
-    if (deadman_pressed && movement_command_active)
-    {
-        publishAckermannCmd(normalized_speed, normalized_steering);
-        return;
-    }
-
-    publishStopCmd();
+    publishTeleopCmd(normalized_speed, normalized_steering);
 }
 
-KeyboardTeleopNode::KeyCode KeyboardTeleopNode::readKeyCode()
+TeleopKeyboardNode::KeyCode TeleopKeyboardNode::readKeyCode()
 {
     const int first_byte = std::getchar();
     if (first_byte == EOF)
@@ -76,12 +61,23 @@ KeyboardTeleopNode::KeyCode KeyboardTeleopNode::readKeyCode()
 
     switch (first_byte)
     {
-    case 'a':
-        return KeyCode::ArmToggle;
+    case 'e':
+        return KeyCode::ToggleEngageVehicle;
     case 'm':
-        return KeyCode::ModeToggle;
-    case ' ':
-        return KeyCode::Space;
+        return KeyCode::SwitchGateMode;
+
+    // WASD keys for movement
+    case 'w':
+        return KeyCode::Up;
+    case 's':
+        return KeyCode::Down;
+    case 'a':
+        return KeyCode::Left;
+    case 'd':
+        return KeyCode::Right;
+
+    // Arrow keys are represented by a sequence of three bytes: 27 (ESC), 91 ([),
+    // and a final byte indicating the direction.
     case 27:
     {
         if (kb_.hit() < 2)
@@ -108,6 +104,7 @@ KeyboardTeleopNode::KeyCode KeyboardTeleopNode::readKeyCode()
             return KeyCode::Unknown;
         }
     }
+
     default:
         return KeyCode::Unknown;
     }
@@ -116,7 +113,7 @@ KeyboardTeleopNode::KeyCode KeyboardTeleopNode::readKeyCode()
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<KeyboardTeleopNode>();
+    auto node = std::make_shared<TeleopKeyboardNode>();
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;

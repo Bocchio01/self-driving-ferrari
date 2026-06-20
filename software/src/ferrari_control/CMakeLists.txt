@@ -17,11 +17,11 @@ find_package(ackermann_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 
 # ==========================================
-# Shared teleop base
+# Shared teleop_base
 # ==========================================
-add_library(ferrari_control_teleop_base src/teleop_base.cpp)
-target_include_directories(ferrari_control_teleop_base PUBLIC include)
-target_link_libraries(ferrari_control_teleop_base
+add_library(teleop_base src/teleop/teleop_base.cpp)
+target_include_directories(teleop_base PUBLIC include)
+target_link_libraries(teleop_base
     PUBLIC
     rclcpp::rclcpp
     ackermann_msgs::ackermann_msgs
@@ -29,32 +29,32 @@ target_link_libraries(ferrari_control_teleop_base
 )
 
 # ==========================================
-# Target 1: joy_teleop_node
+# Target 1: teleop_joy_node
 # ==========================================
-add_executable(joy_teleop_node src/joy_teleop.cpp)
-target_include_directories(joy_teleop_node PUBLIC include)
-target_link_libraries(joy_teleop_node
+add_executable(teleop_joy_node src/teleop/teleop_joy.cpp)
+target_include_directories(teleop_joy_node PUBLIC include)
+target_link_libraries(teleop_joy_node
     PRIVATE
-    ferrari_control_teleop_base
+    teleop_base
     sensor_msgs::sensor_msgs
 )
 
 # ==========================================
-# Target 2: keyboard_teleop_node
+# Target 2: teleop_keyboard_node
 # ==========================================
-add_executable(keyboard_teleop_node src/keyboard_teleop.cpp src/KBHit.cpp)
-target_include_directories(keyboard_teleop_node PUBLIC include)
-target_link_libraries(keyboard_teleop_node
+add_executable(teleop_keyboard_node src/teleop/teleop_keyboard.cpp src/teleop/KBHit.cpp)
+target_include_directories(teleop_keyboard_node PUBLIC include)
+target_link_libraries(teleop_keyboard_node
     PRIVATE
-    ferrari_control_teleop_base
+    teleop_base
 )
 
 # ==========================================
-# Target 3: vehicle_cmd_gate_node
+# Target 3: control_gate_node
 # ==========================================
-add_executable(vehicle_cmd_gate_node src/vehicle_cmd_gate.cpp)
-target_include_directories(vehicle_cmd_gate_node PUBLIC include)
-target_link_libraries(vehicle_cmd_gate_node
+add_executable(control_gate_node src/control_gate.cpp)
+target_include_directories(control_gate_node PUBLIC include)
+target_link_libraries(control_gate_node
     PRIVATE
     rclcpp::rclcpp
     ackermann_msgs::ackermann_msgs
@@ -65,10 +65,10 @@ target_link_libraries(vehicle_cmd_gate_node
 # Installation
 # ==========================================
 install(TARGETS
-    ferrari_control_teleop_base
-    joy_teleop_node
-    keyboard_teleop_node
-    vehicle_cmd_gate_node
+    teleop_base
+    teleop_joy_node
+    teleop_keyboard_node
+    control_gate_node
     DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -76,6 +76,12 @@ install(
     DIRECTORY include/
     DESTINATION include
 )
+
+install(DIRECTORY
+    launch
+    DESTINATION share/${PROJECT_NAME}
+)
+
 
 # =========================================
 # Testing
