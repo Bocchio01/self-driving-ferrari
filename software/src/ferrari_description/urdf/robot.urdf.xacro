@@ -2,6 +2,7 @@
 <robot name="ackermann_vehicle"
     xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+    <!-- Materials -->
     <material name="black">
         <color rgba="0.0 0.0 0.0 1.0"/>
     </material>
@@ -72,7 +73,7 @@
             <limit effort="100" velocity="50"/>
             <dynamics damping="0.0" friction="0.0"/>
         </joint>
-        <transmission name="trans_${lr}_hing">
+        <!-- <transmission name="trans_${lr}_hing">
             <type>transmission_interface/SimpleTransmission</type>
             <joint name="${lr}_hinge">
                 <hardwareInterface>EffortJointInterface</hardwareInterface>
@@ -91,7 +92,7 @@
                 <hardwareInterface>EffortJointInterface</hardwareInterface>
                 <mechanicalReduction>1</mechanicalReduction>
             </actuator>
-        </transmission>
+        </transmission> -->
     </xacro:macro>
 
     <xacro:macro name="rear_wheel" params="lr lr_reflect">
@@ -150,7 +151,6 @@
             <mass value="1"/>
             <origin xyz="0 0 0.3" rpy="0 0 0"/>
             <xacro:box_inertia x="${wheel_base_length}" y="${wheel_base_width-wheel_thickness}" z=".1" m="1" />
-            <!--<inertia ixx="0.4" ixy="0.1" ixz="0.1" iyy="0.4" iyz="0.1" izz="0.2"/>-->
         </inertial>
     </link>
     <!-- Chassis END -->
@@ -160,39 +160,28 @@
     <xacro:rear_wheel lr="right_wheel_rear" lr_reflect="-1" />
     <xacro:rear_wheel lr="left_wheel_rear" lr_reflect="1" />
 
+    <gazebo>
+        <plugin filename="libgz-sim-ackermann-steering-system.so" name="gz::sim::systems::AckermannSteering">
+            <left_joint>left_wheel_rear_rotate</left_joint>
+            <right_joint>right_wheel_rear_rotate</right_joint>
+            <left_steering_joint>left_wheel_hinge</left_steering_joint>
+            <right_steering_joint>right_wheel_hinge</right_steering_joint>
+            <wheelbase>1.753</wheelbase>
+            <track_width>1.245</track_width>
+            <wheel_radius>0.292</wheel_radius>
+            <min_velocity>-5.0</min_velocity>
+            <max_velocity>5.0</max_velocity>
+            <min_steering>-0.6</min_steering>
+            <max_steering>0.6</max_steering>
+            <topic>/cmd_vel</topic>
+        </plugin>
 
-    <!-- Camera -->
-    <!-- You can adjust the camera angle with the p in rpy, measured in radians. -->
-    <!-- You can also increate the height of the camera by adding a number, in meters, -->
-    <!-- to the z in xyz. For example, to simulate a camera mounted on a 1/2 meter post, -->
-    <!-- we can replace the z value with ${wheelRadius+chassisHeight+0.5} -->
-    <!-- <joint name="camera_joint" type="fixed">
-        <origin xyz="${wheel_base_length/2} 0 ${(wheel_diameter/2)+1}" rpy="0 1.0 0"/>
-        <parent link="chassis"/>
-        <child link="camera"/>
-    </joint> -->
-
-    <!-- <link name="camera">
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size=".05 .05 .05"/>
-            </geometry>
-        </collision>
-
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size=".05 .05 .05"/>
-            </geometry>
-            <material name="blue"/>
-        </visual>
-
-        <inertial>
-            <mass value="0.05" />
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <xacro:box_inertia x=".05" y=".05" z=".05" m="0.05" />
-        </inertial>
-    </link> -->
+        <plugin filename="libgz-sim-odometry-publisher-system.so" name="gz::sim::systems::OdometryPublisher">
+            <odom_frame>odom</odom_frame>
+            <robot_base_frame>base_link</robot_base_frame>
+        </plugin>
+        <plugin filename="libgz-sim-joint-state-publisher-system.so" name="gz::sim::systems::JointStatePublisher">
+        </plugin>
+    </gazebo>
 
 </robot>

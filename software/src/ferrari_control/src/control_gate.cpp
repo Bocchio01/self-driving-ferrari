@@ -61,10 +61,6 @@ void ControlGateNode::controlLoop()
         {
             output = last_teleop_cmd_;
         }
-        else
-        {
-            RCLCPP_WARN(this->get_logger(), "Teleop command timeout. Publishing stop command.");
-        }
     }
     else // GateMode::AUTO
     {

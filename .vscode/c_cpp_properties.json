@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/install/micro_ros_msgs/include/**",
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/install/ferrari_control/include/**",
+        "/opt/ros/lyrical/include/**",
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_control/include/**",
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_localization/include/**",
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_mapping/include/**",
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_perception/include/**",
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_planning/include/**",
+        "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_sensing/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ros2",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++17"
+    }
+  ],
+  "version": 4
+}

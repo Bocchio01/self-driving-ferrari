@@ -8,8 +8,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 PACKAGE_NAMES: dict[str, Optional[str]] = {
     "ferrari_bringup": None,
-    "ferrari_description": None,
+    # "ferrari_description": "simulation.launch.py",
     "ferrari_control": "control.launch.py",
+    "ferrari_vehicle": "vehicle.launch.py",
 }
 
 

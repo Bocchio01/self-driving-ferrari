@@ -20,7 +20,7 @@
         "src/ferrari_perception": true,
         "src/ferrari_planning": true,
         "src/ferrari_sensing": true,
-        "src/ferrari_vehicle": true,
+        "src/ferrari_vehicle": false,
     },
     "files.associations": {
         "*.urdf": "xml",
