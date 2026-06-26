@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ferrari_common/control_cmd.h"
+#include <geometry_msgs/msg/twist.h>
 #include "vehicle/interfaces/kinematic.hpp"
 #include "vehicle/actuators/propulsion.hpp"
 
@@ -22,7 +22,7 @@ public:
 
     void bindActuatorPropulsion(ActuatorPropulsion &actuator_propulsion, ActuatorPropulsionSide side);
 
-    void executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd);
+    void executeMotionCommand(const void *motion_cmd);
     bool executeArming();
     bool executeDisarming();
     bool isArmed();

@@ -1,14 +1,27 @@
 #pragma once
 
-#include "network/ros.h"
-#include "vehicle/vehicle_interface.hpp"
+#include <rcl/rcl.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
 
-class Service
+/**
+ * Base class for microROS services
+ */
+class IService
 {
-protected:
-    IVehicle *vehicle;
-
 public:
-    virtual ~Service() {}
-    virtual void init(ros::NodeHandle &nh, IVehicle &vehicle) = 0;
+    virtual ~IService() = default;
+
+    /**
+     * Initialize service in the microROS network
+     */
+    virtual void init(rcl_node_t *node, rclc_executor_t *executor) = 0;
+
+    /**
+     * Get the service handle for executor registration
+     */
+    rcl_service_t *getService() { return &service_; }
+
+protected:
+    rcl_service_t service_;
 };

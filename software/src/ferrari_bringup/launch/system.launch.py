@@ -1,50 +1,42 @@
 import os
-from typing import Optional
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-
-
-PACKAGE_NAMES: dict[str, Optional[str]] = {
-    "ferrari_bringup": None,
-    # "ferrari_description": "simulation.launch.py",
-    "ferrari_control": "control.launch.py",
-    "ferrari_vehicle": "vehicle.launch.py",
-}
-
-
-def create_include_launch_description(
-    package_name: str,
-    launch_file: Optional[str],
-) -> Optional[IncludeLaunchDescription]:
-
-    if launch_file is not None:
-        launch_file_path = os.path.join(
-            get_package_share_directory(package_name),
-            "launch",
-            launch_file,
-        )
-        if os.path.exists(launch_file_path):
-            return IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(launch_file_path)
-            )
-        else:
-            print(f"Launch file {launch_file} not found in package {package_name}")
-
-    return None
+from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.conditions import IfCondition
 
 
 def generate_launch_description():
+    mode_arg = DeclareLaunchArgument(
+        "mode",
+        default_value="all",
+        description='Deployment mode: "ground_station", "vehicle", or "all"',
+    )
+    mode = LaunchConfiguration("mode")
 
-    include_launch_descriptions = []
+    ferrari_control_dir = get_package_share_directory("ferrari_control")
+    ferrari_vehicle_dir = get_package_share_directory("ferrari_vehicle")
 
-    for package_name, launch_file in PACKAGE_NAMES.items():
-        include_launch_description = create_include_launch_description(
-            package_name,
-            launch_file,
-        )
-        if include_launch_description is not None:
-            include_launch_descriptions.append(include_launch_description)
+    vehicle_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(ferrari_vehicle_dir, "launch", "vehicle.launch.py")
+        ),
+        launch_arguments={"mode": mode}.items(),
+        condition=IfCondition(PythonExpression(["'", mode, "' in ['vehicle', 'all']"])),
+    )
 
-    return LaunchDescription(include_launch_descriptions)
+    control_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(ferrari_control_dir, "launch", "control.launch.py")
+        ),
+        launch_arguments={"mode": mode}.items(),
+    )
+
+    return LaunchDescription(
+        [
+            mode_arg,
+            vehicle_launch,
+            control_launch,
+        ]
+    )

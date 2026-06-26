@@ -21,7 +21,7 @@ private:
     const uint8_t AIN1;
     const uint8_t AIN2;
     const uint8_t STBY;
-    _ramp<propulsion_throttle_t> throttle;
+    rampInt throttle;
     AccelerationMode acceleration_mode;
 
 private:

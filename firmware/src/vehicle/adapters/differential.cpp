@@ -28,10 +28,12 @@ void KinematicDifferential::bindActuatorPropulsion(ActuatorPropulsion &actuator_
     }
 }
 
-void KinematicDifferential::executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd)
+void KinematicDifferential::executeMotionCommand(const void *motion_cmd_)
 {
-    int16_t throttle_left = motion_cmd.vehicle_yaw_rate - static_cast<int16_t>(motion_cmd.vehicle_longitudinal_rate / 2);
-    int16_t throttle_right = motion_cmd.vehicle_yaw_rate + static_cast<int16_t>(motion_cmd.vehicle_longitudinal_rate / 2);
+    const geometry_msgs__msg__Twist &motion_cmd = *static_cast<const geometry_msgs__msg__Twist *>(motion_cmd_);
+
+    int16_t throttle_left = motion_cmd.angular.z - static_cast<int16_t>(motion_cmd.linear.x / 2);
+    int16_t throttle_right = motion_cmd.angular.z + static_cast<int16_t>(motion_cmd.linear.x / 2);
 
     this->actuator_propulsion_right->setThrottle(throttle_right);
     // this->actuator_propulsion_right->update();

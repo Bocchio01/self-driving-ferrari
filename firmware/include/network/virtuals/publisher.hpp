@@ -1,15 +1,35 @@
 #pragma once
 
-#include "network/ros.h"
-#include "vehicle/vehicle_interface.hpp"
+#include <rcl/rcl.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
 
-class Publisher
+/**
+ * Base class for microROS publishers
+ */
+class IPublisher
 {
-protected:
-    IVehicle *vehicle;
-
 public:
-    virtual ~Publisher() {}
-    virtual void init(ros::NodeHandle &nh, IVehicle &vehicle) = 0;
-    virtual void publish() = 0;
+    virtual ~IPublisher() = default;
+
+    /**
+     * Initialize publisher in the microROS network
+     */
+    virtual void init(rcl_node_t *node) = 0;
+
+    /**
+     * Publish a message
+     */
+    virtual void publish(const void *msg) = 0;
+
+    /**
+     * Get the publisher handle
+     */
+    rcl_publisher_t *getPublisher()
+    {
+        return &publisher_;
+    }
+
+private:
+    rcl_publisher_t publisher_;
 };

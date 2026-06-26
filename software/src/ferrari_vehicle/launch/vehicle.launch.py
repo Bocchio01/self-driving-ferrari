@@ -8,7 +8,9 @@ def generate_launch_description():
         cmd=[
             "docker",
             "run",
+            "-i",
             "--rm",
+            "--init",
             "-v",
             "/dev:/dev",
             "-v",
@@ -23,6 +25,7 @@ def generate_launch_description():
         ],
         name="micro_ros_agent_docker",
         output="screen",
+        emulate_tty=True,
     )
 
     return LaunchDescription(

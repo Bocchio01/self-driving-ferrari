@@ -2,7 +2,6 @@
 #include "vehicle/kinematics/ackermann.hpp"
 #include "vehicle/actuators/steering.hpp"
 #include "vehicle/actuators/propulsion.hpp"
-#include <ros.h>
 
 KinematicAckermann::KinematicAckermann()
     : actuator_steering(nullptr),
@@ -25,13 +24,14 @@ void KinematicAckermann::bindActuatorPropulsion(ActuatorPropulsion &actuator_pro
     this->actuator_propulsion->disarm();
 }
 
-void KinematicAckermann::executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd)
+void KinematicAckermann::executeMotionCommand(const void *motion_cmd_)
 {
+    const ackermann_msgs__msg__AckermannDriveStamped &motion_cmd = *static_cast<const ackermann_msgs__msg__AckermannDriveStamped *>(motion_cmd_);
     using steering_angle_t = ActuatorSteering::steering_angle_t;
     using throttle_t = ActuatorPropulsion::propulsion_throttle_t;
 
-    steering_angle_t steering_angle = map(motion_cmd.vehicle_yaw_rate, -100, +100, this->actuator_steering->steering_angle_minimum, this->actuator_steering->steering_angle_maximum);
-    throttle_t propulsion_throttle = map(motion_cmd.vehicle_longitudinal_rate, -100, +100, this->actuator_propulsion->throttle_minimum, this->actuator_propulsion->throttle_maximum);
+    steering_angle_t steering_angle = map(motion_cmd.drive.steering_angle, -1.0, +1.0, this->actuator_steering->steering_angle_minimum, this->actuator_steering->steering_angle_maximum);
+    throttle_t propulsion_throttle = map(motion_cmd.drive.speed, -1.0, +1.0, this->actuator_propulsion->throttle_minimum, this->actuator_propulsion->throttle_maximum);
 
     this->actuator_steering->setSteeringAngle(steering_angle);
     this->actuator_propulsion->setThrottle(propulsion_throttle);

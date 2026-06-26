@@ -6,6 +6,8 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    mode_arg = DeclareLaunchArgument("mode", default_value="all")
+    mode = LaunchConfiguration("mode")
 
     teleop_device_arg = DeclareLaunchArgument(
         "teleop_device",
@@ -32,14 +34,24 @@ def generate_launch_description():
         executable="teleop_joy_node",
         name="teleop_joy_node",
         output="screen",
-        condition=IfCondition(PythonExpression(["'", device_choice, "' == 'joy'"])),
+        condition=IfCondition(
+            PythonExpression(
+                [
+                    "'",
+                    mode,
+                    "' in ['ground_station', 'all'] and '",
+                    device_choice,
+                    "' == 'joy'",
+                ]
+            )
+        ),
         parameters=[
             {
                 "steering_axis": 0,
                 "speed_axis": 1,
                 "switch_gate_mode_button": 8,
                 "toggle_engage_vehicle_button": 9,
-                "invert_steering": True,
+                "invert_steering": False,
                 "invert_speed": False,
             }
         ],
@@ -51,12 +63,21 @@ def generate_launch_description():
         name="teleop_keyboard_node",
         output="screen",
         condition=IfCondition(
-            PythonExpression(["'", device_choice, "' == 'keyboard'"])
+            PythonExpression(
+                [
+                    "'",
+                    mode,
+                    "' in ['ground_station', 'all'] and '",
+                    device_choice,
+                    "' == 'keyboard'",
+                ]
+            )
         ),
     )
 
     return LaunchDescription(
         [
+            mode_arg,
             teleop_device_arg,
             joy_node,
             teleop_joy_node,

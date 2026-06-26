@@ -1,67 +1,51 @@
 #include <Arduino.h>
-#include "network/ros.h"
 
 #include "vehicle/vehicle.hpp"
 #include "vehicle/kinematics/ackermann.hpp"
-#include "vehicle/kinematics/differential.hpp"
 #include "vehicle/actuators/steering.hpp"
 #include "vehicle/actuators/propulsion.hpp"
 
 #include "network/network.hpp"
-#include "network/subscribers/control_cmd.hpp"
-// #include "network/publishers/hello_world.hpp"
-#include "network/services/arm_disarm.hpp"
+#include "network/subscribers/ackermann_cmd.hpp"
+#include "network/services/toggle_engage_vehicle.hpp"
 
 Vehicle<KinematicAckermann> vehicle;
-Network network;
+Network &network = Network::getInstance();
 
-/* Vehicle actuators ***************************************/
-ActuatorSteering actuator_steering(6, 75, 35, 115);
-ActuatorPropulsion actuator_propulsion(3, 2, 4, 5, 0, -100, +100);
+// Actuators
+ActuatorSteering actuator_steering(2, 75, 35, 115);
+ActuatorPropulsion actuator_propulsion(29, 30, 31, 32, 0, -100, +100);
 
-/* Vehicle sensors *****************************************/
-// To be implemented
-
-/* ROS network publishers **********************************/
-// PublisherHelloWorld pub_hello_world;
-// PublisherSensorGyro pub_sensor_gyro;
-// PublisherSensorIMU pub_sensor_imu;
-// PublisherSensorLidar pub_sensor_lidar;
-// PublisherSensorSonar pub_sensor_sonar;
-// PublisherSensorGPS pub_sensor_gps;
-// PublisherSensorBattery pub_sensor_battery;
-
-/* ROS network subscribers *********************************/
-SubscriberControlCmd sub_control_cmd;
-
-/* ROS network services ************************************/
-ServiceArmDisarm srv_arm_disarm;
+// Network components
+SubscriberAckermannCmd sub_control_cmd;
+ServiceToggleEngageVehicle srv_toggle_engage_vehicle;
 
 void setup()
 {
-    /* Vehicle setup ***************************************/
+    // Vehicle setup
+    actuator_steering.reset();
+    actuator_propulsion.reset();
     vehicle.bindActuatorSteering(actuator_steering);
     vehicle.bindActuatorPropulsion(actuator_propulsion);
-    // vehicle.addSensor(gyroscope);
 
-    /* ROS network setup ***********************************/
-    // network.addPublisher(pub_hello_world);
+    // Network setup
     network.addSubscriber(sub_control_cmd);
-    network.addService(srv_arm_disarm);
-
-    /* Network-Vehicle binding and initialization **********/
+    network.addService(srv_toggle_engage_vehicle);
     network.bindVehicle(vehicle);
-    network.init(57600);
+    network.init(115200, "ferrari_node", RCUTILS_LOG_SEVERITY_INFO);
 }
 
 void loop()
 {
-    // pub_hello_world.publish();
     network.spinOnce();
 
-    sub_control_cmd.checkTimeout();
+    if (sub_control_cmd.checkTimeout())
+    {
+        vehicle.executeEmercencyStop();
+    }
+
     actuator_propulsion.update();
     actuator_steering.update();
 
-    delay(50);
+    delay(20);
 }

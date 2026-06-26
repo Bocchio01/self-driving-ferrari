@@ -18,5 +18,18 @@
         "/opt/ros/lyrical/opt/gz_msgs_vendor/lib/python",
         "/opt/ros/lyrical/opt/gz_math_vendor/lib/python",
         "/opt/ros/lyrical/lib/python3.14/site-packages"
-    ]
+    ],
+    "C_Cpp.workspaceParsingPriority": "low",
+    "C_Cpp.intelliSenseMemoryLimit": 2048,
+    "C_Cpp.intelliSenseCacheSize": 5120,
+    "search.exclude": {
+        ".pio": true
+    },
+    "files.watcherExclude": {
+        ".pio/**": true
+    },
+    "C_Cpp.files.exclude": {
+        ".pio/build/**": true
+    },
+    "cmake.ignoreCMakeListsMissing": true
 }

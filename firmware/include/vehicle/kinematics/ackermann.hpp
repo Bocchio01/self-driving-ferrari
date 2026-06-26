@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ferrari_common/control_cmd.h"
+#include <ackermann_msgs/msg/ackermann_drive_stamped.h>
 #include "vehicle/interfaces/kinematic.hpp"
 #include "vehicle/actuators/steering.hpp"
 #include "vehicle/actuators/propulsion.hpp"
@@ -17,7 +17,7 @@ public:
     void bindActuatorSteering(ActuatorSteering &actuator_steering);
     void bindActuatorPropulsion(ActuatorPropulsion &actuator_propulsion);
 
-    void executeMotionCommand(const ferrari_common::motion_cmd &motion_cmd);
+    void executeMotionCommand(const void *motion_cmd);
     void executeEmercencyStop();
     bool executeArming();
     bool executeDisarming();

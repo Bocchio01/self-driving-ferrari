@@ -1,4 +1,7 @@
 #include <Arduino.h>
+#include <Ramp.h>
+#include <rcl/rcl.h>
+
 #include "vehicle/actuators/propulsion.hpp"
 
 ActuatorPropulsion::ActuatorPropulsion(uint8_t PWMA,
@@ -31,11 +34,27 @@ ActuatorPropulsion::~ActuatorPropulsion()
 
 void ActuatorPropulsion::setThrottle(propulsion_throttle_t throttle)
 {
-
     propulsion_throttle_t target = constrain(throttle, this->throttle_minimum, this->throttle_maximum);
-    unsigned int duration = static_cast<int>(1000.0f * abs(this->throttle.getValue() - throttle) / rates[static_cast<int>(this->acceleration_mode)]);
+    propulsion_throttle_t current = this->throttle.getValue();
+
+    propulsion_throttle_t target_rel = static_cast<propulsion_throttle_t>(target) - static_cast<propulsion_throttle_t>(this->throttle_reset);
+    propulsion_throttle_t current_rel = static_cast<propulsion_throttle_t>(current) - static_cast<propulsion_throttle_t>(this->throttle_reset);
+
+    bool is_flipping_direction = (target_rel * current_rel) < 0;
+    bool is_accelerating = abs(target_rel) > abs(current_rel);
+
+    unsigned int duration = is_flipping_direction || is_accelerating
+                                ? static_cast<int>(this->rates[static_cast<int>(this->acceleration_mode)])
+                                : 0;
 
     this->throttle.go(target, duration, ramp_mode::SINUSOIDAL_INOUT);
+
+    RCUTILS_LOG_DEBUG("ActuatorPropulsion::setThrottle: is_flipping_direction=%d, is_accelerating=%d, duration=%d, target=%d, current=%d",
+                      is_flipping_direction,
+                      is_accelerating,
+                      duration,
+                      target,
+                      current);
 }
 
 bool ActuatorPropulsion::arm()
@@ -70,6 +89,8 @@ bool ActuatorPropulsion::update()
     }
 
     analogWrite(this->PWMA, constrain(abs(throttle_current), 0, 255));
+
+    RCUTILS_LOG_DEBUG("ActuatorPropulsion::update: throttle_current=%d", throttle_current);
 
     return true;
 }

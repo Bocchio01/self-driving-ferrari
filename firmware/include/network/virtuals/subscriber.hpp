@@ -1,14 +1,31 @@
 #pragma once
 
-#include "network/ros.h"
-#include "vehicle/vehicle_interface.hpp"
+#include <rcl/rcl.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
 
-class Subscriber
+/**
+ * Base class for microROS subscribers
+ */
+class ISubscriber
 {
-protected:
-    IVehicle *vehicle;
-
 public:
-    virtual ~Subscriber() {}
-    virtual void init(ros::NodeHandle &nh, IVehicle &vehicle) = 0;
+    virtual ~ISubscriber() = default;
+
+    /**
+     * Initialize subscriber in the microROS network
+     * Override this in derived classes to set up the subscriber
+     */
+    virtual void init(rcl_node_t *node, rclc_executor_t *executor) = 0;
+
+    /**
+     * Get the subscription handle (for executor registration)
+     */
+    rcl_subscription_t *getSubscription()
+    {
+        return &subscription_;
+    }
+
+protected:
+    rcl_subscription_t subscription_;
 };
