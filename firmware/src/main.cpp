@@ -32,7 +32,7 @@ void setup()
     network.addSubscriber(sub_control_cmd);
     network.addService(srv_toggle_engage_vehicle);
     network.bindVehicle(vehicle);
-    network.init(115200, "ferrari_node", RCUTILS_LOG_SEVERITY_INFO);
+    network.init(Serial1, 115200, "ferrari_node", RCUTILS_LOG_SEVERITY_INFO);
 }
 
 void loop()

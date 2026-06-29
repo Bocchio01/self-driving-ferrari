@@ -12,14 +12,14 @@
         "/opt/ros/lyrical/lib/python3.14/site-packages"
     ],
     "files.exclude": {
-        "build": true,
-        "install": true,
-        "log": true,
-        "src/ferrari_localization": true,
-        "src/ferrari_mapping": true,
-        "src/ferrari_perception": true,
-        "src/ferrari_planning": true,
-        "src/ferrari_sensing": true,
+        "build": false,
+        "install": false,
+        "log": false,
+        "src/ferrari_localization": false,
+        "src/ferrari_mapping": false,
+        "src/ferrari_perception": false,
+        "src/ferrari_planning": false,
+        "src/ferrari_sensing": false,
         "src/ferrari_vehicle": false,
     },
     "files.associations": {

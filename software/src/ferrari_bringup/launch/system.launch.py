@@ -17,6 +17,8 @@ def generate_launch_description():
 
     ferrari_control_dir = get_package_share_directory("ferrari_control")
     ferrari_vehicle_dir = get_package_share_directory("ferrari_vehicle")
+    ferrari_sensing_dir = get_package_share_directory("ferrari_sensing")
+    ferrari_dashboard_dir = get_package_share_directory("ferrari_dashboard")
 
     vehicle_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -33,10 +35,26 @@ def generate_launch_description():
         launch_arguments={"mode": mode}.items(),
     )
 
+    sensing_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(ferrari_sensing_dir, "launch", "sensing.launch.py")
+        ),
+        launch_arguments={"mode": mode}.items(),
+    )
+
+    dashboard_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(ferrari_dashboard_dir, "launch", "dashboard.launch.py")
+        ),
+        launch_arguments={"mode": mode}.items(),
+    )
+
     return LaunchDescription(
         [
             mode_arg,
             vehicle_launch,
             control_launch,
+            sensing_launch,
+            dashboard_launch,
         ]
     )

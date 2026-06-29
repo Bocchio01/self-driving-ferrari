@@ -9,7 +9,7 @@
                 "--event-handlers",
                 "console_cohesion+",
                 "--base-paths",
-                "/home/bocchio/Documents/github/self-driving-ferrari/software",
+                "${workspaceFolder}",
                 "--cmake-args",
                 "-DCMAKE_BUILD_TYPE=Debug",
                 "--cmake-args",

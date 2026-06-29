@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ferrari Camera Stream</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .dashboard-card {
+            background: #1e1e1e;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        #status {
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .connected {
+            color: #4ade80;
+        }
+
+        .disconnected {
+            color: #f87171;
+        }
+
+        #videoStream {
+            width: 640px;
+            height: 480px;
+            background-color: #000;
+            border: 2px solid #333;
+            border-radius: 4px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-card">
+        <h2>Ferrari Dashboard</h2>
+        <div id="status" class="disconnected">System: Disconnected</div>
+        <img id="videoStream" alt="Waiting for video stream..." />
+    </div>
+
+    <script>
+        // Dynamically connect to whichever IP is serving the page
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const ws = new WebSocket(wsProtocol + window.location.host);
+        ws.binaryType = 'blob';
+
+        const statusEl = document.getElementById('status');
+        const imageEl = document.getElementById('videoStream');
+        let currentObjectUrl = null;
+
+        ws.onopen = () => {
+            statusEl.textContent = 'System: Connected (Live Stream)';
+            statusEl.className = 'connected';
+        };
+
+        ws.onclose = () => {
+            statusEl.textContent = 'System: Disconnected';
+            statusEl.className = 'disconnected';
+        };
+
+        ws.onmessage = (event) => {
+            if (currentObjectUrl) {
+                URL.revokeObjectURL(currentObjectUrl);
+            }
+            currentObjectUrl = URL.createObjectURL(event.data);
+            imageEl.src = currentObjectUrl;
+        };
+    </script>
+</body>
+
+</html>

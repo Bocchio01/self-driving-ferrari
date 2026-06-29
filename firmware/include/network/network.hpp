@@ -104,13 +104,17 @@ public:
 
     /**
      * Initialize the microROS network
+     * @param serial Serial port to use for microROS communication
      * @param serial_baudrate Serial port baud rate (typically 115200)
      * @param node_name Name of the ROS2 node
      * @param log_level Logging level for microROS (default: RCUTILS_LOG_SEVERITY_DEBUG)
      */
-    void init(uint32_t serial_baudrate = 115200,
-              const char *node_name = "teensy_node",
-              RCUTILS_LOG_SEVERITY log_level = RCUTILS_LOG_SEVERITY_DEBUG)
+    template <typename SerialClass>
+    void init(
+        SerialClass &serial,
+        uint32_t serial_baudrate = 115200,
+        const char *node_name = "teensy_node",
+        RCUTILS_LOG_SEVERITY log_level = RCUTILS_LOG_SEVERITY_DEBUG)
     {
         if (isInitialized())
         {
@@ -118,8 +122,8 @@ public:
         }
 
         // Initialize the serial transport for microROS
-        Serial.begin(serial_baudrate);
-        set_microros_serial_transports(Serial);
+        serial.begin(serial_baudrate);
+        set_microros_serial_transports(serial);
 
         // Wait for the serial connection to be established
         delay(2000);

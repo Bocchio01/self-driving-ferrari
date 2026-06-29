@@ -21,9 +21,20 @@ def generate_launch_description():
         package="joy",
         executable="joy_node",
         name="joy_node",
+        condition=IfCondition(
+            PythonExpression(
+                [
+                    "'",
+                    mode,
+                    "' in ['ground_station', 'all'] and '",
+                    device_choice,
+                    "' == 'joy'",
+                ]
+            )
+        ),
         parameters=[
             {
-                "deadzone": 0.05,
+                "deadzone": 0.1,
                 "autorepeat_rate": 20.0,
             }
         ],
@@ -48,7 +59,7 @@ def generate_launch_description():
         parameters=[
             {
                 "steering_axis": 0,
-                "speed_axis": 1,
+                "speed_axis": 4,
                 "switch_gate_mode_button": 8,
                 "toggle_engage_vehicle_button": 9,
                 "invert_steering": False,
