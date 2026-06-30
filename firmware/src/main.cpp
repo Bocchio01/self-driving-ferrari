@@ -22,9 +22,10 @@ ServiceToggleEngageVehicle srv_toggle_engage_vehicle;
 
 void setup()
 {
+    // Serial setup for debugging
+    Serial.begin(115200);
+
     // Vehicle setup
-    actuator_steering.reset();
-    actuator_propulsion.reset();
     vehicle.bindActuatorSteering(actuator_steering);
     vehicle.bindActuatorPropulsion(actuator_propulsion);
 
@@ -32,12 +33,12 @@ void setup()
     network.addSubscriber(sub_control_cmd);
     network.addService(srv_toggle_engage_vehicle);
     network.bindVehicle(vehicle);
-    network.init(Serial1, 115200, "ferrari_node", RCUTILS_LOG_SEVERITY_INFO);
+    network.configure(Serial1, 115200, "ferrari_node", RCUTILS_LOG_SEVERITY_INFO);
 }
 
 void loop()
 {
-    network.spinOnce();
+    network.spin();
 
     if (sub_control_cmd.checkTimeout())
     {
