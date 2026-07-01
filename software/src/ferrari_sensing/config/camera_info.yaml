@@ -1,0 +1,26 @@
+image_width: 640
+image_height: 480
+camera_name: imx219_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [739.597426, 0.0, 314.611856,
+         0.0, 733.874660, 234.692425,
+         0.0, 0.0, 1.0]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.098590, 0.100049, -0.001107, 0.002149, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0,
+         0.0, 1.0, 0.0,
+         0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [728.343573, 0.0, 315.434048, 0.0,
+         0.0, 726.861236, 234.340955, 0.0,
+         0.0, 0.0, 1.0, 0.0]

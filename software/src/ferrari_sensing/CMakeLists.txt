@@ -1,15 +1,23 @@
 cmake_minimum_required(VERSION 3.20)
 project(ferrari_sensing)
 
+if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(cv_bridge REQUIRED)
 
 # ==========================================
 # Target: camera
@@ -18,12 +26,16 @@ add_executable(camera_node src/camera.cpp)
 target_include_directories(camera_node PUBLIC
     include
     ${OpenCV_INCLUDE_DIRS}
+    ${cv_bridge_INCLUDE_DIRS}
 )
 target_link_libraries(camera_node
     PRIVATE
     rclcpp::rclcpp
     sensor_msgs::sensor_msgs
     ${OpenCV_LIBS}
+    yaml-cpp::yaml-cpp
+    ament_index_cpp::ament_index_cpp
+    cv_bridge::cv_bridge
 )
 
 # ==========================================
@@ -41,6 +53,7 @@ install(
 
 install(DIRECTORY
     launch
+    config
     DESTINATION share/${PROJECT_NAME}
 )
 

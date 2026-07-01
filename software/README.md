@@ -19,3 +19,12 @@ Being a ROS2 project, the software is organized in multiple packages, each with 
 - Vehicle Interface (external): Converting the control signals into commands according to various vehicle characteristics.
 
 ![Autoware Architecture](.resources/autoware-architecture.png)
+
+
+### Useful commands
+
+Install dependencies:
+
+```bash
+rosdep install --from-paths src --ignore-src -r -y
+```

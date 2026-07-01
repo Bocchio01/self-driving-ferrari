@@ -18,6 +18,9 @@ def generate_launch_description():
             {
                 "jpeg_quality": 30,
                 "publish_rate": 15.0,
+                # "camera_info_file": "config/camera_info_fallback.yaml",
+                # "camera_info_file": "config/camera_info_windshield.yaml",
+                # "camera_info_file": "config/camera_info.yaml",
             }
         ],
     )

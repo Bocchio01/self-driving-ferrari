@@ -1,0 +1,26 @@
+image_width: 640
+image_height: 480
+camera_name: imx219_camera_windshield
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [727.954114, 0.0, 285.798927,
+         0.0, 719.482032, 216.499809,
+         0.0, 0.0, 1.0]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.309401, -2.226657, -0.024255, -0.001730, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0,
+         0.0, 1.0, 0.0,
+         0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [727.954114, 0.0, 285.798927, 0.0,
+         0.0, 729.603115, 212.807172, 0.0,
+         0.0, 0.0, 1.0, 0.0]
