@@ -1,0 +1,11 @@
+line_detector_node:
+  ros__parameters:
+    warp_src_points_norm: [0.2296875, 0.575, 0.76875, 0.575, 0.9765625, 0.7229166666666667,
+      0.0234375, 0.7125]
+    warp_dst_points_norm: [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]
+    warped_width: 330
+    warped_height: 210
+    hsv_threshold: [0, 179, 0, 255, 141, 255]
+    meters_per_pixel_x: 0.001015
+    meters_per_pixel_y: 0.0010105
+    num_windows: 5

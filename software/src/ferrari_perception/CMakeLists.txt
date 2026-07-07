@@ -17,6 +17,8 @@ find_package(sensor_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 # ==========================================
 # Target: line_detector
@@ -33,6 +35,8 @@ target_link_libraries(line_detector_node
     ${OpenCV_LIBS}
     cv_bridge::cv_bridge
     tf2::tf2
+    image_transport::image_transport
+    nav_msgs::nav_msgs
 )
 
 # ==========================================
@@ -50,6 +54,8 @@ install(
 
 install(DIRECTORY
     launch
+    scripts
+    config
     DESTINATION share/${PROJECT_NAME}
 )
 
