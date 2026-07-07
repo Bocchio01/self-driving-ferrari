@@ -18,6 +18,10 @@ def generate_launch_description():
         package="ferrari_perception",
         executable="line_detector_node",
         name="line_detector_node",
+        namespace="perception",
+        remappings=[
+            ("image_rect", "/sensing/camera/image_rect"),
+        ],
         parameters=[
             config_params,
             {

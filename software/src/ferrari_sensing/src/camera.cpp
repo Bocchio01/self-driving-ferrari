@@ -10,7 +10,7 @@ CameraNode::CameraNode() : Node("camera_node")
     int exposure_time = this->declare_parameter<int>("exposure_time", 15000);
     double analogue_gain = this->declare_parameter<double>("analogue_gain", 2.0);
 
-    publish_rate_ = this->declare_parameter<double>("publish_rate", 30.0);
+    publish_rate_ = this->declare_parameter<int>("publish_rate", 30);
     jpeg_quality_ = this->declare_parameter<int>("jpeg_quality", 80);
 
     camera_info_.width = this->declare_parameter<int>("image_width", 640);
@@ -26,9 +26,9 @@ CameraNode::CameraNode() : Node("camera_node")
     std::copy(p_vec.begin(), p_vec.end(), camera_info_.p.begin());
 
     auto qos = rclcpp::QoS(5).best_effort();
-    camera_info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("/camera/camera_info", qos);
-    image_raw_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/camera/image_raw", qos);
-    image_compressed_pub_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("/camera/image_compressed", qos);
+    camera_info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", qos);
+    image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("image_raw", qos);
+    image_compressed_pub_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("image_raw/compressed", qos);
 
     // GStreamer pipeline for onboard camera
     std::string pipeline = "libcamerasrc ";
@@ -48,6 +48,8 @@ CameraNode::CameraNode() : Node("camera_node")
     pipeline += "videoconvert ! video/x-raw, format=BGR ! ";
     pipeline += "appsink drop=true";
 
+    RCLCPP_INFO(this->get_logger(), "GStreamer pipeline: %s", pipeline.c_str());
+
     // Open camera
     cap_.open(pipeline, cv::CAP_GSTREAMER);
     if (!cap_.isOpened())
@@ -61,7 +63,7 @@ CameraNode::CameraNode() : Node("camera_node")
                 static_cast<int>(cap_.get(cv::CAP_PROP_FRAME_HEIGHT)),
                 cap_.get(cv::CAP_PROP_FPS));
 
-    const auto period = std::chrono::duration<double>(1.0 / std::max(1.0, publish_rate_));
+    const auto period = std::chrono::duration<double>(1.0 / std::max(1, publish_rate_));
     timer_ = this->create_wall_timer(
         std::chrono::duration_cast<std::chrono::milliseconds>(period),
         std::bind(&CameraNode::cameraAcquisitionLoop, this));
@@ -107,7 +109,7 @@ void CameraNode::cameraAcquisitionLoop()
     auto camera_info_msg = sensor_msgs::msg::CameraInfo(camera_info_);
     camera_info_msg.header = header;
 
-    auto image_raw_msg = cv_bridge::CvImage(header, "bgr8", frame).toImageMsg();
+    auto image_msg = cv_bridge::CvImage(header, "bgr8", frame).toImageMsg();
 
     auto image_compressed_msg = sensor_msgs::msg::CompressedImage();
     image_compressed_msg.header = header;
@@ -115,7 +117,7 @@ void CameraNode::cameraAcquisitionLoop()
     image_compressed_msg.data = jpeg_buffer;
 
     camera_info_pub_->publish(camera_info_msg);
-    image_raw_pub_->publish(*image_raw_msg);
+    image_pub_->publish(*image_msg);
     image_compressed_pub_->publish(image_compressed_msg);
 }
 

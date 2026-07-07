@@ -24,14 +24,14 @@ private:
 
     // Node state
     cv::VideoCapture cap_;
-    double publish_rate_;
+    int publish_rate_;
     int jpeg_quality_;
 
     sensor_msgs::msg::CameraInfo camera_info_;
 
     // ROS objects
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_raw_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
     rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr image_compressed_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
 };

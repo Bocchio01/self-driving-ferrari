@@ -24,12 +24,12 @@ ControlGateNode::ControlGateNode(const rclcpp::NodeOptions &options)
     last_teleop_cmd_ = makeStopCommand();
     last_auto_cmd_ = makeStopCommand();
 
-    cmd_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("/ackermann_cmd", 10);
+    cmd_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("ackermann_cmd", 10);
 
-    teleop_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("/teleop_cmd", 10, std::bind(&ControlGateNode::teleopCmdCallback, this, std::placeholders::_1));
-    auto_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("/auto_cmd", 10, std::bind(&ControlGateNode::autoCmdCallback, this, std::placeholders::_1));
+    teleop_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("teleop_cmd", 10, std::bind(&ControlGateNode::teleopCmdCallback, this, std::placeholders::_1));
+    auto_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("auto_cmd", 10, std::bind(&ControlGateNode::autoCmdCallback, this, std::placeholders::_1));
 
-    switch_gate_mode_srv_ = this->create_service<std_srvs::srv::Trigger>("/switch_gate_mode", std::bind(&ControlGateNode::handleSwitchGateMode, this, std::placeholders::_1, std::placeholders::_2));
+    switch_gate_mode_srv_ = this->create_service<std_srvs::srv::Trigger>("switch_gate_mode", std::bind(&ControlGateNode::handleSwitchGateMode, this, std::placeholders::_1, std::placeholders::_2));
 
     const auto period = std::chrono::duration<double>(1.0 / std::max(1.0, control_rate_hz_));
     control_timer_ = this->create_wall_timer(

@@ -33,6 +33,10 @@ def generate_launch_description():
         executable="control_gate_node",
         name="control_gate_node",
         output="screen",
+        namespace="control",
+        remappings=[
+            ("ackermann_cmd", "/vehicle/ackermann_cmd"),
+        ],
         condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
         parameters=[
             {

@@ -23,7 +23,7 @@ TeleopJoyNode::TeleopJoyNode(const rclcpp::NodeOptions &options)
     invert_steering_ = this->declare_parameter<bool>("invert_steering", false);
     invert_speed_ = this->declare_parameter<bool>("invert_speed", false);
 
-    joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("/joy", 20, std::bind(&TeleopJoyNode::joyCallback, this, _1));
+    joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 20, std::bind(&TeleopJoyNode::joyCallback, this, _1));
 
     RCLCPP_INFO(this->get_logger(), "teleop_joy_node started");
 }

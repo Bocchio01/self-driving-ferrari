@@ -14,14 +14,14 @@ PLATFORM = "ground"
 PACKAGES = [
     # "ferrari_bringup",
     "ferrari_control",
-    # "ferrari_dashboard",
+    "ferrari_dashboard",
     # "ferrari_description",
     # "ferrari_localization",
     # "ferrari_mapping",
     "ferrari_perception",
     # "ferrari_planning",
-    # "ferrari_sensing",
-    # "ferrari_vehicle",
+    "ferrari_sensing",
+    "ferrari_vehicle",
 ]
 
 

@@ -41,19 +41,19 @@ LineDetectorNode::LineDetectorNode(const rclcpp::NodeOptions &options) : Node("l
     meters_per_pixel_y_ = declare_parameter<double>("meters_per_pixel_y", 0.002);
     meters_per_pixel_x_ = declare_parameter<double>("meters_per_pixel_x", 0.002);
 
-    path_pub_ = create_publisher<nav_msgs::msg::Path>("perception/line_path", 10);
+    path_pub_ = create_publisher<nav_msgs::msg::Path>("line_path", 10);
 
     if (publish_debug_image_)
     {
         debug_image_pub_ = image_transport::create_publisher(
             *this,
-            "perception/debug_image",
+            "debug_image",
             rclcpp::SensorDataQoS());
     }
 
     image_sub_ = image_transport::create_subscription(
         *this,
-        "sensing/camera/image_rect",
+        "image_rect",
         std::bind(&LineDetectorNode::imgCallback, this, _1),
         transport_hint_,
         rclcpp::SensorDataQoS());

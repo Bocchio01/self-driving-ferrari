@@ -1,54 +1,23 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node
-
-CAMERA_CONFIG_FILES = [
-    "camera_info_fallback.yaml",
-    "camera_info_windshield.yaml",
-    "camera_info.yaml",
-]
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
 
-    config_params = os.path.join(
-        get_package_share_directory("ferrari_sensing"), "config", CAMERA_CONFIG_FILES[2]
-    )
+    pkg_dir = get_package_share_directory("ferrari_sensing")
 
-    camera_node = Node(
-        package="ferrari_sensing",
-        executable="camera_node",
-        name="camera_node",
-        parameters=[
-            config_params,
-            {
-                "jpeg_quality": 30,
-                "publish_rate": 15.0,
-                "enable_manual_exposure": True,
-                "exposure_time": 5000,
-                "analogue_gain": 2.0,
-            },
-        ],
-    )
-
-    image_proc_node = Node(
-        package="image_proc",
-        executable="rectify_node",
-        name="rectify_node",
-        namespace="camera",
-        remappings=[
-            # ("image", "image_raw"),
-            ("image/compressed", "image_compressed"),
-            ("camera_info", "camera_info"),
-            ("image_rect", "image_rect"),
-        ],
-        parameters=[{"image_transport": "compressed"}],
+    camera_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_dir, "launch", "camera.launch.py")
+        ),
     )
 
     return LaunchDescription(
         [
-            camera_node,
-            image_proc_node,
+            camera_launch,
+            # lidar_launch,
         ]
     )

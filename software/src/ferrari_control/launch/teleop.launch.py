@@ -32,6 +32,10 @@ def generate_launch_description():
         executable="teleop_joy_node",
         name="teleop_joy_node",
         output="screen",
+        namespace="control",
+        remappings=[
+            ("toggle_engage_vehicle", "/vehicle/toggle_engage_vehicle"),
+        ],
         condition=IfCondition(PythonExpression(["'", device, "' == 'joy'"])),
         parameters=[
             {
@@ -50,6 +54,10 @@ def generate_launch_description():
         executable="teleop_keyboard_node",
         name="teleop_keyboard_node",
         output="screen",
+        namespace="control",
+        remappings=[
+            ("toggle_engage_vehicle", "/vehicle/toggle_engage_vehicle"),
+        ],
         condition=IfCondition(PythonExpression(["'", device, "' == 'keyboard'"])),
     )
 

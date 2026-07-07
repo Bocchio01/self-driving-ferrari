@@ -6,9 +6,9 @@
 TeleopBase::TeleopBase(const std::string &node_name, const rclcpp::NodeOptions &options)
     : Node(node_name, options)
 {
-    teleop_cmd_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("/teleop_cmd", 10);
-    engage_vehicle_client_ = this->create_client<std_srvs::srv::Trigger>("/toggle_engage_vehicle");
-    gate_mode_client_ = this->create_client<std_srvs::srv::Trigger>("/switch_gate_mode");
+    teleop_cmd_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("teleop_cmd", 10);
+    engage_vehicle_client_ = this->create_client<std_srvs::srv::Trigger>("toggle_engage_vehicle");
+    gate_mode_client_ = this->create_client<std_srvs::srv::Trigger>("switch_gate_mode");
 }
 
 void TeleopBase::publishTeleopCmd(double normalized_speed, double normalized_steering)

@@ -31,7 +31,7 @@ async function main() {
 
     node.createSubscription(
         'sensor_msgs/msg/CompressedImage',
-        '/camera/image_compressed',
+        'image_raw/compressed',
         { qos: qosProfile },
         (msg) => {
             const rawJpegData = msg.data;
