@@ -12,15 +12,7 @@
         "/opt/ros/lyrical/lib/python3.14/site-packages"
     ],
     "files.exclude": {
-        "build": false,
-        "install": false,
-        "log": false,
-        "src/ferrari_localization": false,
-        "src/ferrari_mapping": false,
-        "src/ferrari_perception": false,
-        "src/ferrari_planning": false,
-        "src/ferrari_sensing": false,
-        "src/ferrari_vehicle": false,
+        "log": true,
     },
     "files.associations": {
         "*.urdf": "xml",

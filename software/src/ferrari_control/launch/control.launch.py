@@ -9,8 +9,8 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    mode_arg = DeclareLaunchArgument("mode", default_value="all")
-    mode = LaunchConfiguration("mode")
+    platform_arg = DeclareLaunchArgument("platform")
+    platform = LaunchConfiguration("platform")
 
     pkg_dir = get_package_share_directory("ferrari_control")
 
@@ -18,35 +18,35 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(pkg_dir, "launch", "teleop.launch.py")
         ),
-        launch_arguments={"mode": mode}.items(),
+        condition=IfCondition(PythonExpression(["'", platform, "' == 'ground'"])),
     )
 
-    # auto_control_launch = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(pkg_dir, "launch", "auto_control.launch.py")
-    #     ),
-    # )
+    auto_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_dir, "launch", "auto.launch.py")
+        ),
+        condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
+    )
 
     control_gate_node = Node(
         package="ferrari_control",
         executable="control_gate_node",
         name="control_gate_node",
         output="screen",
-        condition=IfCondition(PythonExpression(["'", mode, "' in ['vehicle', 'all']"])),
+        condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
         parameters=[
             {
                 "control_rate_hz": 30.0,
                 "teleop_timeout_s": 0.25,
-                # "auto_timeout_s": 0.5,
             }
         ],
     )
 
     return LaunchDescription(
         [
-            mode_arg,
+            platform_arg,
             teleop_launch,
-            # auto_control_launch,
+            auto_launch,
             control_gate_node,
         ]
     )

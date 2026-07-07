@@ -4,8 +4,8 @@ from launch.substitutions import LaunchConfiguration, PythonExpression
 
 
 def generate_launch_description():
-    mode_arg = DeclareLaunchArgument("mode", default_value="all")
-    mode = LaunchConfiguration("mode")
+    platform_arg = DeclareLaunchArgument("platform")
+    platform = LaunchConfiguration("platform")
 
     micro_ros_agent = ExecuteProcess(
         cmd=[
@@ -24,11 +24,7 @@ def generate_launch_description():
             "serial",
             "--dev",
             PythonExpression(
-                [
-                    "'/dev/ttyS0' if '",
-                    mode,
-                    "' == 'vehicle' else '/dev/ttyACM0'",
-                ]
+                ["'/dev/ttyS0' if '", platform, "' == 'onboard' else '/dev/ttyACM0'"]
             ),
             "-v6",
         ],
@@ -39,7 +35,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            mode_arg,
+            platform_arg,
             micro_ros_agent,
         ]
     )

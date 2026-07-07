@@ -1,27 +1,34 @@
+import os
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition
 from launch_ros.actions import Node
+
+CAMERA_CONFIG_FILES = [
+    "camera_info_fallback.yaml",
+    "camera_info_windshield.yaml",
+    "camera_info.yaml",
+]
 
 
 def generate_launch_description():
-    mode_arg = DeclareLaunchArgument("mode", default_value="all")
-    mode = LaunchConfiguration("mode")
+
+    config_params = os.path.join(
+        get_package_share_directory("ferrari_sensing"), "config", CAMERA_CONFIG_FILES[2]
+    )
 
     camera_node = Node(
         package="ferrari_sensing",
         executable="camera_node",
         name="camera_node",
-        condition=IfCondition(PythonExpression(["'", mode, "' in ['vehicle']"])),
         parameters=[
+            config_params,
             {
                 "jpeg_quality": 30,
                 "publish_rate": 15.0,
-                # "camera_info_file": "config/camera_info_fallback.yaml",
-                # "camera_info_file": "config/camera_info_windshield.yaml",
-                # "camera_info_file": "config/camera_info.yaml",
-            }
+                "enable_manual_exposure": True,
+                "exposure_time": 5000,
+                "analogue_gain": 2.0,
+            },
         ],
     )
 
@@ -31,16 +38,16 @@ def generate_launch_description():
         name="rectify_node",
         namespace="camera",
         remappings=[
-            ("image", "image_raw"),
+            # ("image", "image_raw"),
+            ("image/compressed", "image_compressed"),
             ("camera_info", "camera_info"),
             ("image_rect", "image_rect"),
         ],
-        condition=IfCondition(PythonExpression(["'", mode, "' in ['vehicle', 'all']"])),
+        parameters=[{"image_transport": "compressed"}],
     )
 
     return LaunchDescription(
         [
-            mode_arg,
             camera_node,
             image_proc_node,
         ]

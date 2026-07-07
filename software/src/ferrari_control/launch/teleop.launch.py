@@ -6,32 +6,19 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    mode_arg = DeclareLaunchArgument("mode", default_value="all")
-    mode = LaunchConfiguration("mode")
-
-    teleop_device_arg = DeclareLaunchArgument(
-        "teleop_device",
+    device_arg = DeclareLaunchArgument(
+        "device",
         default_value="joy",
         description='Choose teleop device: "joy" or "keyboard"',
     )
-
-    device_choice = LaunchConfiguration("teleop_device")
+    device = LaunchConfiguration("device")
 
     joy_node = Node(
         package="joy",
         executable="joy_node",
         name="joy_node",
-        condition=IfCondition(
-            PythonExpression(
-                [
-                    "'",
-                    mode,
-                    "' in ['ground_station', 'all'] and '",
-                    device_choice,
-                    "' == 'joy'",
-                ]
-            )
-        ),
+        namespace="control",
+        condition=IfCondition(PythonExpression(["'", device, "' == 'joy'"])),
         parameters=[
             {
                 "deadzone": 0.1,
@@ -45,17 +32,7 @@ def generate_launch_description():
         executable="teleop_joy_node",
         name="teleop_joy_node",
         output="screen",
-        condition=IfCondition(
-            PythonExpression(
-                [
-                    "'",
-                    mode,
-                    "' in ['ground_station', 'all'] and '",
-                    device_choice,
-                    "' == 'joy'",
-                ]
-            )
-        ),
+        condition=IfCondition(PythonExpression(["'", device, "' == 'joy'"])),
         parameters=[
             {
                 "steering_axis": 0,
@@ -73,23 +50,12 @@ def generate_launch_description():
         executable="teleop_keyboard_node",
         name="teleop_keyboard_node",
         output="screen",
-        condition=IfCondition(
-            PythonExpression(
-                [
-                    "'",
-                    mode,
-                    "' in ['ground_station', 'all'] and '",
-                    device_choice,
-                    "' == 'keyboard'",
-                ]
-            )
-        ),
+        condition=IfCondition(PythonExpression(["'", device, "' == 'keyboard'"])),
     )
 
     return LaunchDescription(
         [
-            mode_arg,
-            teleop_device_arg,
+            device_arg,
             joy_node,
             teleop_joy_node,
             teleop_keyboard_node,

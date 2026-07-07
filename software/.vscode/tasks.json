@@ -7,7 +7,7 @@
                 "build",
                 "--symlink-install",
                 "--event-handlers",
-                "console_cohesion+",
+                "summary+",
                 "--base-paths",
                 "${workspaceFolder}",
                 "--cmake-args",
