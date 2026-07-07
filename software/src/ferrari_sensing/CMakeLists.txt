@@ -12,11 +12,9 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(yaml-cpp REQUIRED)
 find_package(cv_bridge REQUIRED)
 
 # ==========================================
@@ -33,8 +31,6 @@ target_link_libraries(camera_node
     rclcpp::rclcpp
     sensor_msgs::sensor_msgs
     ${OpenCV_LIBS}
-    yaml-cpp::yaml-cpp
-    ament_index_cpp::ament_index_cpp
     cv_bridge::cv_bridge
 )
 

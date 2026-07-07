@@ -1,56 +1,65 @@
 #include <cv_bridge/cv_bridge.hpp>
-#include <yaml-cpp/yaml.h>
-#include <ament_index_cpp/get_package_share_path.hpp>
 #include "ferrari_sensing/camera.hpp"
 
 using namespace std::chrono_literals;
 using namespace std::placeholders;
 
-CameraNode::CameraNode()
-    : Node("camera_publisher")
+CameraNode::CameraNode() : Node("camera_node")
 {
+    bool enable_manual_exposure = this->declare_parameter<bool>("enable_manual_exposure", true);
+    int exposure_time = this->declare_parameter<int>("exposure_time", 15000);
+    double analogue_gain = this->declare_parameter<double>("analogue_gain", 2.0);
+
     publish_rate_ = this->declare_parameter<double>("publish_rate", 30.0);
     jpeg_quality_ = this->declare_parameter<int>("jpeg_quality", 80);
 
-    std::string camera_info_file = this->declare_parameter<std::string>("camera_info_file", "config/camera_info.yaml");
-    std::string camera_info_path = ament_index_cpp::get_package_share_path("ferrari_sensing") / camera_info_file;
+    camera_info_.width = this->declare_parameter<int>("image_width", 640);
+    camera_info_.height = this->declare_parameter<int>("image_height", 480);
+    camera_info_.header.frame_id = this->declare_parameter<std::string>("camera_name", "camera");
+    camera_info_.distortion_model = this->declare_parameter<std::string>("distortion_model", "plumb_bob");
+    camera_info_.d = this->declare_parameter<std::vector<double>>("distortion_coefficients", std::vector<double>(5, 0.0));
+    auto k_vec = this->declare_parameter<std::vector<double>>("camera_matrix", std::vector<double>(9, 0.0));
+    auto r_vec = this->declare_parameter<std::vector<double>>("rectification_matrix", std::vector<double>(9, 0.0));
+    auto p_vec = this->declare_parameter<std::vector<double>>("projection_matrix", std::vector<double>(12, 0.0));
+    std::copy(k_vec.begin(), k_vec.end(), camera_info_.k.begin());
+    std::copy(r_vec.begin(), r_vec.end(), camera_info_.r.begin());
+    std::copy(p_vec.begin(), p_vec.end(), camera_info_.p.begin());
 
-    if (!this->loadCameraInfo(camera_info_path))
-    {
-        RCLCPP_ERROR(this->get_logger(), "Failed to load camera info from YAML file");
-        throw std::runtime_error("Failed to load camera info from YAML file");
-    }
-
-    auto qos = rclcpp::QoS(2).best_effort();
+    auto qos = rclcpp::QoS(5).best_effort();
     camera_info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("/camera/camera_info", qos);
     image_raw_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/camera/image_raw", qos);
     image_compressed_pub_ = this->create_publisher<sensor_msgs::msg::CompressedImage>("/camera/image_compressed", qos);
 
-#ifdef USE_CAMERA_INFO_SERVICE
-    set_camera_info_srv_ = this->create_service<sensor_msgs::srv::SetCameraInfo>(
-        "camera/set_camera_info",
-        std::bind(&CameraNode::setCameraInfoCallback, this, _1, _2));
-#endif
+    // GStreamer pipeline for onboard camera
+    std::string pipeline = "libcamerasrc ";
+
+    if (enable_manual_exposure)
+    {
+        pipeline += "exposure-time-mode=1 analogue-gain-mode=1 ";
+        pipeline += "exposure-time=" + std::to_string(exposure_time) + " ";
+        pipeline += "analogue-gain=" + std::to_string(analogue_gain) + " ! ";
+    }
+    else
+    {
+        pipeline += "exposure-time-mode=0 analogue-gain-mode=0 ! ";
+    }
+
+    pipeline += "video/x-raw, width=" + std::to_string(camera_info_.width) + ", height=" + std::to_string(camera_info_.height) + ", framerate=" + std::to_string(publish_rate_) + "/1 ! ";
+    pipeline += "videoconvert ! video/x-raw, format=BGR ! ";
+    pipeline += "appsink drop=true";
 
     // Open camera
-    cap_.open("libcamerasrc ! video/x-raw, width=640, height=480 ! videoconvert ! video/x-raw, format=BGR ! appsink drop=true", cv::CAP_GSTREAMER);
+    cap_.open(pipeline, cv::CAP_GSTREAMER);
     if (!cap_.isOpened())
     {
         RCLCPP_ERROR(this->get_logger(), "Failed to open camera with GStreamer pipeline");
         throw std::runtime_error("Cannot open camera");
     }
 
-    // Set camera properties
-    cap_.set(cv::CAP_PROP_FRAME_WIDTH, 640);
-    cap_.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-    cap_.set(cv::CAP_PROP_FPS, publish_rate_);
-
-    // Get actual resolution
-    width_ = static_cast<int>(cap_.get(cv::CAP_PROP_FRAME_WIDTH));
-    height_ = static_cast<int>(cap_.get(cv::CAP_PROP_FRAME_HEIGHT));
-    double actual_fps = cap_.get(cv::CAP_PROP_FPS);
-
-    RCLCPP_INFO(this->get_logger(), "Camera opened: %dx%d @ %.1f FPS", width_, height_, actual_fps);
+    RCLCPP_INFO(this->get_logger(), "Camera opened: %dx%d @ %.1f FPS",
+                static_cast<int>(cap_.get(cv::CAP_PROP_FRAME_WIDTH)),
+                static_cast<int>(cap_.get(cv::CAP_PROP_FRAME_HEIGHT)),
+                cap_.get(cv::CAP_PROP_FPS));
 
     const auto period = std::chrono::duration<double>(1.0 / std::max(1.0, publish_rate_));
     timer_ = this->create_wall_timer(
@@ -95,6 +104,9 @@ void CameraNode::cameraAcquisitionLoop()
     header.stamp = this->now();
     header.frame_id = "camera";
 
+    auto camera_info_msg = sensor_msgs::msg::CameraInfo(camera_info_);
+    camera_info_msg.header = header;
+
     auto image_raw_msg = cv_bridge::CvImage(header, "bgr8", frame).toImageMsg();
 
     auto image_compressed_msg = sensor_msgs::msg::CompressedImage();
@@ -102,76 +114,9 @@ void CameraNode::cameraAcquisitionLoop()
     image_compressed_msg.format = "jpeg";
     image_compressed_msg.data = jpeg_buffer;
 
-    auto camera_info_msg = sensor_msgs::msg::CameraInfo(camera_info_);
-    camera_info_msg.header = header;
-
+    camera_info_pub_->publish(camera_info_msg);
     image_raw_pub_->publish(*image_raw_msg);
     image_compressed_pub_->publish(image_compressed_msg);
-    camera_info_pub_->publish(camera_info_msg);
-}
-
-void CameraNode::setCameraInfoCallback(
-    const std::shared_ptr<sensor_msgs::srv::SetCameraInfo::Request> request,
-    std::shared_ptr<sensor_msgs::srv::SetCameraInfo::Response> response)
-{
-    try
-    {
-        camera_info_ = request->camera_info;
-
-        RCLCPP_INFO(this->get_logger(), "Successfully updated camera calibration parameters!");
-
-        response->success = true;
-        response->status_message = "Camera info updated successfully.";
-    }
-    catch (const std::exception &e)
-    {
-        response->success = false;
-        response->status_message = std::string("Failed to update camera info: ") + e.what();
-    }
-}
-
-bool CameraNode::loadCameraInfo(const std::string &file_path)
-{
-    try
-    {
-        YAML::Node config = YAML::LoadFile(file_path);
-
-        camera_info_.header.frame_id = config["camera_name"].as<std::string>();
-        camera_info_.height = config["image_height"].as<int>();
-        camera_info_.width = config["image_width"].as<int>();
-
-        camera_info_.distortion_model = config["distortion_model"].as<std::string>();
-        auto d_node = config["distortion_coefficients"]["data"];
-        for (const auto &val : d_node)
-        {
-            camera_info_.d.push_back(val.as<double>());
-        }
-
-        auto k_node = config["camera_matrix"]["data"];
-        for (size_t i = 0; i < 9; ++i)
-        {
-            camera_info_.k[i] = k_node[i].as<double>();
-        }
-
-        auto r_node = config["rectification_matrix"]["data"];
-        for (size_t i = 0; i < 9; ++i)
-        {
-            camera_info_.r[i] = r_node[i].as<double>();
-        }
-
-        auto p_node = config["projection_matrix"]["data"];
-        for (size_t i = 0; i < 12; ++i)
-        {
-            camera_info_.p[i] = p_node[i].as<double>();
-        }
-
-        return true;
-    }
-    catch (const std::exception &e)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Error parsing YAML: %s", e.what());
-        return false;
-    }
 }
 
 int main(int argc, char *argv[])
