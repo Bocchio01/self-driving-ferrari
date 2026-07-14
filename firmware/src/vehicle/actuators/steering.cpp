@@ -1,68 +1,65 @@
 #include <Arduino.h>
 #include <Servo.h>
+
+#include "vehicle/configs.hpp"
 #include "vehicle/actuators/steering.hpp"
 
-ActuatorSteering::ActuatorSteering(uint8_t pin_signal,
-                                   steering_angle_t steering_angle_reset,
-                                   steering_angle_t steering_angle_minimum,
-                                   steering_angle_t steering_angle_maximum)
-    : IActuator(),
-      Servo(),
-      pin_signal(pin_signal),
-      steering_angle(steering_angle_reset),
-      steering_angle_current(steering_angle_reset),
-      steering_angle_reset(steering_angle_reset),
-      steering_angle_minimum(steering_angle_minimum),
-      steering_angle_maximum(steering_angle_maximum)
+using namespace vehicle::actuators;
+
+Steering::Steering(uint8_t pin_signal)
+    : pin_signal(pin_signal)
+{
+    this->setTargetSteeringAngle(0.0f);
+}
+
+Steering::~Steering()
 {
 }
 
-ActuatorSteering::~ActuatorSteering()
+void Steering::setTargetSteeringAngle(const float target_steering_angle)
 {
+    this->target_steering_angle = target_steering_angle;
 }
 
-void ActuatorSteering::setSteeringAngle(steering_angle_t steering_angle)
+bool Steering::arm()
 {
-    this->steering_angle = min(this->steering_angle_maximum, max(this->steering_angle_minimum, steering_angle));
-}
-
-bool ActuatorSteering::arm()
-{
-    this->attach(this->pin_signal);
-    this->write(this->steering_angle);
     this->is_armed = true;
+    this->attach(this->pin_signal);
+    this->reset();
 
     return this->attached();
 }
 
-bool ActuatorSteering::disarm()
+bool Steering::disarm()
 {
-    this->detach();
     this->is_armed = false;
+    this->detach();
+    digitalWrite(this->pin_signal, LOW); // CHECK THIS
 
     return true;
 }
 
-bool ActuatorSteering::update()
+bool Steering::update()
 {
     if (!this->is_armed)
     {
         return false;
     }
 
-    if (this->steering_angle_current != this->steering_angle)
+    if (this->current_steering_angle != this->target_steering_angle)
     {
-        this->write(this->steering_angle);
-        this->steering_angle_current = this->steering_angle;
+        this->servo_pwm = vehicle::configs::Actuators::STEERING_ANGLE_TO_SERVO_PWM(this->target_steering_angle);
+        this->write(this->servo_pwm);
+        this->current_steering_angle = this->target_steering_angle;
     }
 
     return true;
 }
 
-bool ActuatorSteering::reset()
+bool Steering::reset()
 {
-    this->setSteeringAngle(this->steering_angle_reset);
-    this->write(this->steering_angle);
+    this->setTargetSteeringAngle(0.0f);
+    this->update();
 
     return true;
 }

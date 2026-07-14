@@ -20,7 +20,7 @@ public:
     /**
      * Publish a message
      */
-    virtual void publish(const void *msg) = 0;
+    virtual void publish() = 0;
 
     /**
      * Get the publisher handle

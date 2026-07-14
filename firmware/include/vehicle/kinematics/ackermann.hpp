@@ -1,25 +1,45 @@
 #pragma once
 
+#include <Ramp.h>
 #include <ackermann_msgs/msg/ackermann_drive_stamped.h>
-#include "vehicle/interfaces/kinematic.hpp"
+
+#include "vehicle/kinematics/kinematic.hpp"
 #include "vehicle/actuators/steering.hpp"
 #include "vehicle/actuators/propulsion.hpp"
 
-class KinematicAckermann : public IKinematic
+namespace vehicle::kinematics
 {
-private:
-    ActuatorSteering *actuator_steering;
-    ActuatorPropulsion *actuator_propulsion;
+    class Ackermann : public vehicle::interfaces::Kinematic
+    {
 
-public:
-    KinematicAckermann();
+    public:
+        enum class DrivingStyle : uint8_t
+        {
+            CALM,
+            BALANCED,
+            NERVOUS
+        };
 
-    void bindActuatorSteering(ActuatorSteering &actuator_steering);
-    void bindActuatorPropulsion(ActuatorPropulsion &actuator_propulsion);
+        Ackermann();
 
-    void executeMotionCommand(const void *motion_cmd);
-    void executeEmercencyStop();
-    bool executeArming();
-    bool executeDisarming();
-    bool isArmed();
-};
+        void bindActuators(vehicle::actuators::Steering &actuator_steering, vehicle::actuators::Propulsion &actuator_propulsion);
+        void bindActuatorSteering(vehicle::actuators::Steering &actuator_steering);
+        void bindActuatorPropulsion(vehicle::actuators::Propulsion &actuator_propulsion);
+
+        void setMotionCommand(const void *motion_cmd);
+        void update();
+        void executeEmergencyStop();
+        bool arm();
+        bool disarm();
+        bool isArmed();
+
+    private:
+        DrivingStyle driving_style = DrivingStyle::BALANCED;
+
+        vehicle::actuators::Steering *actuator_steering;
+        vehicle::actuators::Propulsion *actuator_propulsion;
+
+        rampFloat ramp_target_steering;
+        rampFloat ramp_target_velocity;
+    };
+}

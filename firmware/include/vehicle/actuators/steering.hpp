@@ -1,36 +1,39 @@
 #pragma once
 
 #include <Servo.h>
-#include "vehicle/interfaces/actuator.hpp"
 
-class ActuatorSteering : public IActuator, public Servo
+#include "vehicle/actuators/actuator.hpp"
+
+namespace vehicle::kinematics
 {
-    typedef int16_t steering_angle_t;
+    class Ackermann;
+    class Differential;
+}
 
-private:
-    const uint8_t pin_signal;
+namespace vehicle::actuators
+{
+    class Steering : public vehicle::interfaces::Actuator, public Servo
+    {
+    public:
+        Steering(uint8_t pin_signal);
+        ~Steering();
 
-private:
-    steering_angle_t steering_angle;
-    steering_angle_t steering_angle_current;
-    const steering_angle_t steering_angle_reset;
-    const steering_angle_t steering_angle_minimum;
-    const steering_angle_t steering_angle_maximum;
+        void setTargetSteeringAngle(const float steering_angle);
+        float getCurrentSteeringAngle() const { return this->current_steering_angle; }
 
-public:
-    ActuatorSteering(uint8_t pin_signal,
-                     steering_angle_t steering_angle_reset = 90,
-                     steering_angle_t steering_angle_minimum = 0,
-                     steering_angle_t steering_angle_maximum = 180);
-    ~ActuatorSteering();
+        bool arm() override;
+        bool disarm() override;
+        bool update() override;
+        bool reset() override;
 
-    bool arm() override;
-    bool disarm() override;
-    bool update() override;
-    bool reset() override;
+        friend class vehicle::kinematics::Ackermann;
+        friend class vehicle::kinematics::Differential;
 
-    void setSteeringAngle(steering_angle_t angle);
+    private:
+        const uint8_t pin_signal;
 
-    friend class KinematicAckermann;
-    friend class KinematicDifferential;
-};
+        uint8_t servo_pwm = 0;
+        float current_steering_angle = 0.0f;
+        float target_steering_angle = 0.0f;
+    };
+}

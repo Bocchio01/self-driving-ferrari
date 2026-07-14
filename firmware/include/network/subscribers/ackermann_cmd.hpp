@@ -28,7 +28,7 @@ public:
             &subscription_,
             node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(ackermann_msgs, msg, AckermannDriveStamped),
-            "/ackermann_cmd",
+            "/vehicle/ackermann_cmd",
             &sub_opt.qos));
 
         RCCHECK(rclc_executor_add_subscription_with_context(
@@ -62,15 +62,10 @@ private:
 
     static void callback(const void *msgin, void *context)
     {
-        const ackermann_msgs__msg__AckermannDriveStamped *msg = static_cast<const ackermann_msgs__msg__AckermannDriveStamped *>(msgin);
         SubscriberAckermannCmd *self = static_cast<SubscriberAckermannCmd *>(context);
-        IVehicle *vehicle = Network::getVehicle();
+        vehicle::interfaces::Vehicle *vehicle = Network::getVehicle();
 
         self->last_message_time_ = millis();
-        vehicle->executeMotionCommand(msgin);
-
-        // RCUTILS_LOG_DEBUG("Received Speed: %.2f, Angle: %.2f",
-        //                   msg->drive.speed,
-        //                   msg->drive.steering_angle);
+        vehicle->setMotionCommand(msgin);
     }
 };

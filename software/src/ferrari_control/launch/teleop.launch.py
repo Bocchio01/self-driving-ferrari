@@ -34,7 +34,7 @@ def generate_launch_description():
         output="screen",
         namespace="control",
         remappings=[
-            ("toggle_engage_vehicle", "/vehicle/toggle_engage_vehicle"),
+            ("toggle_arm_actuators", "/vehicle/toggle_arm_actuators"),
         ],
         condition=IfCondition(PythonExpression(["'", device, "' == 'joy'"])),
         parameters=[
@@ -42,7 +42,7 @@ def generate_launch_description():
                 "steering_axis": 0,
                 "speed_axis": 4,
                 "switch_gate_mode_button": 8,
-                "toggle_engage_vehicle_button": 9,
+                "toggle_arm_actuators_button": 9,
                 "invert_steering": False,
                 "invert_speed": False,
             }
@@ -56,7 +56,7 @@ def generate_launch_description():
         output="screen",
         namespace="control",
         remappings=[
-            ("toggle_engage_vehicle", "/vehicle/toggle_engage_vehicle"),
+            ("toggle_arm_actuators", "/vehicle/toggle_arm_actuators"),
         ],
         condition=IfCondition(PythonExpression(["'", device, "' == 'keyboard'"])),
     )

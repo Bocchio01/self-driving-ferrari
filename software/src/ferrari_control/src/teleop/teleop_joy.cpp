@@ -9,16 +9,16 @@ TeleopJoyNode::TeleopJoyNode(const rclcpp::NodeOptions &options)
     : TeleopBase("teleop_joy_node", options),
       steering_axis_(0),
       speed_axis_(1),
-      toggle_engage_vehicle_button_(7),
+      toggle_arm_actuators_button_(7),
       switch_gate_mode_button_(6),
       invert_steering_(false),
       invert_speed_(false),
-      toggle_engage_vehicle_prev_(false),
+      toggle_arm_actuators_prev_(false),
       switch_gate_mode_prev_(false)
 {
     steering_axis_ = this->declare_parameter<int>("steering_axis", 0);
     speed_axis_ = this->declare_parameter<int>("speed_axis", 1);
-    toggle_engage_vehicle_button_ = this->declare_parameter<int>("toggle_engage_vehicle_button", 7);
+    toggle_arm_actuators_button_ = this->declare_parameter<int>("toggle_arm_actuators_button", 7);
     switch_gate_mode_button_ = this->declare_parameter<int>("switch_gate_mode_button", 6);
     invert_steering_ = this->declare_parameter<bool>("invert_steering", false);
     invert_speed_ = this->declare_parameter<bool>("invert_speed", false);
@@ -31,12 +31,12 @@ TeleopJoyNode::TeleopJoyNode(const rclcpp::NodeOptions &options)
 void TeleopJoyNode::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
     // Check for engage vehicle toggle button press
-    const bool toggle_engage_vehicle_pressed = readButton(*msg, toggle_engage_vehicle_button_);
-    if (toggle_engage_vehicle_pressed && !toggle_engage_vehicle_prev_)
+    const bool toggle_arm_actuators_pressed = readButton(*msg, toggle_arm_actuators_button_);
+    if (toggle_arm_actuators_pressed && !toggle_arm_actuators_prev_)
     {
         requestToggleEngageVehicle();
     }
-    toggle_engage_vehicle_prev_ = toggle_engage_vehicle_pressed;
+    toggle_arm_actuators_prev_ = toggle_arm_actuators_pressed;
 
     // Check for gate mode switch button press
     const bool switch_gate_mode_pressed = readButton(*msg, switch_gate_mode_button_);

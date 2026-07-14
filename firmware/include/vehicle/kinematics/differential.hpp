@@ -1,29 +1,33 @@
 #pragma once
 
 #include <geometry_msgs/msg/twist.h>
-#include "vehicle/interfaces/kinematic.hpp"
+#include "vehicle/kinematics/kinematic.hpp"
+#include "vehicle/actuators/actuator.hpp"
 #include "vehicle/actuators/propulsion.hpp"
 
-class KinematicDifferential : public IKinematic
+namespace vehicle::kinematics
 {
-public:
-    enum class ActuatorPropulsionSide
+    class Differential : public vehicle::interfaces::Kinematic
     {
-        LEFT,
-        RIGHT
+    public:
+        enum class ActuatorSide
+        {
+            LEFT,
+            RIGHT
+        };
+
+        Differential();
+
+        void bindActuatorPropulsion(vehicle::actuators::Propulsion &actuator_propulsion, ActuatorSide side);
+
+        void setMotionCommand(const void *motion_cmd);
+        bool arm();
+        bool disarm();
+        bool isArmed();
+
+    private:
+        vehicle::actuators::Propulsion *actuator_propulsion_right;
+        vehicle::actuators::Propulsion *actuator_propulsion_left;
     };
 
-private:
-    ActuatorPropulsion *actuator_propulsion_right;
-    ActuatorPropulsion *actuator_propulsion_left;
-
-public:
-    KinematicDifferential();
-
-    void bindActuatorPropulsion(ActuatorPropulsion &actuator_propulsion, ActuatorPropulsionSide side);
-
-    void executeMotionCommand(const void *motion_cmd);
-    bool executeArming();
-    bool executeDisarming();
-    bool isArmed();
-};
+}

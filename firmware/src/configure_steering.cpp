@@ -75,7 +75,7 @@ void subscription_callback(const void *msgin)
     snprintf(log_buffer, sizeof(log_buffer), "Received steering command: %d", incoming_msg->data);
     publish_log(log_buffer);
 
-    actuator_steering.setSteeringAngle(incoming_msg->data);
+    actuator_steering.setTargetSteeringAngle(incoming_msg->data);
 }
 void setup()
 {

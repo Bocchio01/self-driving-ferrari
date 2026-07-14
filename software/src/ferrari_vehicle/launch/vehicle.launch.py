@@ -24,7 +24,7 @@ def generate_launch_description():
             "serial",
             "--dev",
             PythonExpression(
-                ["'/dev/ttyS0' if '", platform, "' == 'onboard' else '/dev/ttyACM0'"]
+                ["'/dev/serial0' if '", platform, "' == 'onboard' else '/dev/ttyACM0'"]
             ),
             "-v6",
         ],

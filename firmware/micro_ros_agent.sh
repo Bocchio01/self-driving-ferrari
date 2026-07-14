@@ -5,4 +5,4 @@ docker run -it --rm \
   --privileged \
   --net=host \
   microros/micro-ros-agent:jazzy \
-  serial --dev /dev/ttyACM0 -v6
+  serial --dev /dev/ttyACM0 -v4

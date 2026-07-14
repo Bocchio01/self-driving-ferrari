@@ -31,5 +31,5 @@
     "C_Cpp.files.exclude": {
         ".pio/build/**": true
     },
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
 }

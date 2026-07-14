@@ -22,21 +22,20 @@
 #define MAX_SERVICES 8
 #define MAX_PUBLISHERS 8
 
-#define RCCHECK(fn)                                                                                  \
-    {                                                                                                \
-        rcl_ret_t temp_rc = fn;                                                                      \
-        if ((temp_rc != RCL_RET_OK))                                                                 \
-        {                                                                                            \
-            Serial.println("Error in " #fn " at line " + String(__LINE__) + ": " + String(temp_rc)); \
-            Serial.println(rcl_get_error_string().str);                                              \
-            rcl_reset_error();                                                                       \
-            for (uint8_t i = 0; i < 10; ++i)                                                         \
-            {                                                                                        \
-                digitalWrite(13, !digitalRead(13));                                                  \
-                delay(100);                                                                          \
-            }                                                                                        \
-            return;                                                                                  \
-        }                                                                                            \
+#define RCCHECK(fn)                                                                                                                                         \
+    {                                                                                                                                                       \
+        rcl_ret_t temp_rc = fn;                                                                                                                             \
+        if ((temp_rc != RCL_RET_OK))                                                                                                                        \
+        {                                                                                                                                                   \
+            Serial.println(String("Error at ") + __FILE__ + ":" + String(__LINE__) + " - " + String(temp_rc) + " - " + String(rcl_get_error_string().str)); \
+            rcl_reset_error();                                                                                                                              \
+            for (uint8_t i = 0; i < 10; ++i)                                                                                                                \
+            {                                                                                                                                               \
+                digitalToggle(13);                                                                                                                          \
+                delay(100);                                                                                                                                 \
+            }                                                                                                                                               \
+            return;                                                                                                                                         \
+        }                                                                                                                                                   \
     }
 
 #define RCSOFTCHECK(fn)              \
@@ -121,7 +120,6 @@ public:
      */
     void spin(uint32_t timeout_ms = 10)
     {
-        Serial.println("Network::spin: state=" + String(static_cast<int>(state_)));
         switch (state_)
         {
         case AgentState::WAITING_AGENT:
@@ -145,14 +143,20 @@ public:
             break;
 
         case AgentState::AGENT_CONNECTED:
-            if (rmw_uros_ping_agent(10, 1) == RMW_RET_OK)
+
+            static unsigned long last_ping_time = millis();
+            if (millis() - last_ping_time > 2000)
             {
-                rclc_executor_spin_some(&executor_, RCL_MS_TO_NS(timeout_ms));
+                last_ping_time = millis();
+                // Give it a 100ms timeout to account for heavy serial traffic
+                if (rmw_uros_ping_agent(100, 1) != RMW_RET_OK)
+                {
+                    state_ = AgentState::AGENT_DISCONNECTED;
+                    break;
+                }
             }
-            else
-            {
-                state_ = AgentState::AGENT_DISCONNECTED;
-            }
+
+            rclc_executor_spin_some(&executor_, RCL_MS_TO_NS(timeout_ms));
             break;
 
         case AgentState::AGENT_DISCONNECTED:
@@ -178,13 +182,14 @@ public:
     void addPublisher(IPublisher &publisher) { publishers_[publisher_count_++] = &publisher; }
 
     // Vehicle binding methods
-    void bindVehicle(IVehicle &vehicle) { vehicle_ = &vehicle; }
-    static IVehicle *getVehicle() { return getInstance().vehicle_; }
+    void bindVehicle(vehicle::interfaces::Vehicle &vehicle) { vehicle_ = &vehicle; }
+    static vehicle::interfaces::Vehicle *getVehicle() { return getInstance().vehicle_; }
 
     // Accessors
     rcl_node_t *getNode() { return &node_; }
     rclc_executor_t *getExecutor() { return &executor_; }
     rcl_allocator_t *getAllocator() { return &allocator_; }
+    AgentState getAgentState() const { return state_; }
 
 private:
     Network() = default;
@@ -195,7 +200,7 @@ private:
     bool initialized_ = false;
     const char *node_name_ = "";
 
-    IVehicle *vehicle_ = nullptr;
+    vehicle::interfaces::Vehicle *vehicle_ = nullptr;
 
     rcl_allocator_t allocator_;
     rclc_support_t support_;
@@ -220,7 +225,8 @@ private:
         allocator_ = rcl_get_default_allocator();
 
         RCCHECK(rclc_support_init(&support_, 0, NULL, &allocator_));
-        RCCHECK(rclc_node_init_default(&node_, node_name_, "", &support_));
+        RCCHECK(rmw_uros_sync_session(1000)); // Wait for the agent to be available
+        RCCHECK(rclc_node_init_default(&node_, node_name_, "/vehicle", &support_));
         RCCHECK(rclc_executor_init(&executor_, &support_.context, MAX_SUBSCRIBERS + MAX_SERVICES, &allocator_));
 
         // Initialize rosout publisher

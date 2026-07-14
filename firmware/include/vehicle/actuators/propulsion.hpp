@@ -1,54 +1,74 @@
 #pragma once
 
 #include <Arduino.h>
-#include <Ramp.h>
-#include "vehicle/interfaces/actuator.hpp"
+#include <pid.hpp>
 
-class ActuatorPropulsion : public IActuator
+#include "vehicle/actuators/actuator.hpp"
+
+namespace vehicle::kinematics
 {
-    typedef int16_t propulsion_throttle_t;
+    class Ackermann;
+    class Differential;
+}
 
-public:
-    enum class AccelerationMode
+namespace vehicle::actuators
+{
+    class Propulsion : public interfaces::Actuator
     {
-        CALM,
-        BALANCED,
-        NERVOUS
+    public:
+        using FeedbackCallback = std::function<float()>;
+
+        enum class ControllerType : uint8_t
+        {
+            SPEED,
+            POSITION
+        };
+
+        Propulsion(uint8_t PWMA,
+                   uint8_t AIN1,
+                   uint8_t AIN2,
+                   uint8_t STBY);
+        ~Propulsion();
+
+        void setControllerType(ControllerType controller_type);
+
+        void setTargetAngularVelocity(float target_angular_velocity);
+        void setTargetAngularPosition(float target_angular_position);
+
+        void setControllerAngularVelocity(PID *controller_angular_velocity, FeedbackCallback feedback_callback);
+        void setControllerAngularPosition(PID *controller_angular_position, FeedbackCallback feedback_callback);
+
+        float getCurrentAngularVelocity() const { return this->current_angular_velocity; }
+        float getCurrentAngularPosition() const { return this->current_angular_position; }
+
+        bool arm() override;
+        bool disarm() override;
+        bool update() override;
+        bool reset() override;
+        bool brake();
+
+        friend class vehicle::kinematics::Ackermann;
+        friend class vehicle::kinematics::Differential;
+
+    private:
+        const uint8_t PWMA;
+        const uint8_t AIN1;
+        const uint8_t AIN2;
+        const uint8_t STBY;
+
+        float current_angular_velocity = NAN;
+        float current_angular_position = NAN;
+        float target_angular_velocity = NAN;
+        float target_angular_position = NAN;
+        float target_angular_position_last = NAN;
+
+        PID *controller_angular_velocity = nullptr;
+        PID *controller_angular_position = nullptr;
+
+        FeedbackCallback feedback_callback_angular_velocity = nullptr;
+        FeedbackCallback feedback_callback_angular_position = nullptr;
+
+        ControllerType controller_type = ControllerType::SPEED;
+        int16_t motor_pwm = 0; // [unitless] [-255, +255]
     };
-
-private:
-    const uint8_t PWMA;
-    const uint8_t AIN1;
-    const uint8_t AIN2;
-    const uint8_t STBY;
-    rampInt throttle;
-    AccelerationMode acceleration_mode;
-
-private:
-    const propulsion_throttle_t throttle_reset;
-    const propulsion_throttle_t throttle_minimum;
-    const propulsion_throttle_t throttle_maximum;
-    const uint8_t rates[3];
-
-public:
-    ActuatorPropulsion(uint8_t PWMA,
-                       uint8_t AIN1,
-                       uint8_t AIN2,
-                       uint8_t STBY,
-                       propulsion_throttle_t throttle_reset = +0,
-                       propulsion_throttle_t throttle_minimum = -255,
-                       propulsion_throttle_t throttle_maximum = +255);
-    ~ActuatorPropulsion();
-
-    bool arm() override;
-    bool disarm() override;
-    bool update() override;
-    bool reset() override;
-    bool brake();
-
-    void setThrottle(propulsion_throttle_t throttle);
-
-    friend class KinematicAckermann;
-    friend class KinematicDifferential;
-    friend class PublisherHelloWorld;
-};
+}

@@ -44,7 +44,7 @@ private:
     // Mapping of joystick axes and buttons
     int steering_axis_;
     int speed_axis_;
-    int toggle_engage_vehicle_button_;
+    int toggle_arm_actuators_button_;
     int switch_gate_mode_button_;
 
     // Node parameters
@@ -52,6 +52,6 @@ private:
     bool invert_speed_;
 
     // State variables to track button presses
-    bool toggle_engage_vehicle_prev_;
+    bool toggle_arm_actuators_prev_;
     bool switch_gate_mode_prev_;
 };

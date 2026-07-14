@@ -40,4 +40,14 @@ protected:
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr teleop_cmd_pub_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr engage_vehicle_client_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr gate_mode_client_;
+
+    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr kinematic_limits_client_;
+    rclcpp::TimerBase::SharedPtr kinematic_limits_retry_timer_;
+
+    double max_speed_ = 1.0;
+    double max_steering_angle_ = 1.0;
+
+private:
+    void fetchKinematicLimits();
+    double extractDoubleFromJson(const std::string &json, const std::string &key, double fallback);
 };
