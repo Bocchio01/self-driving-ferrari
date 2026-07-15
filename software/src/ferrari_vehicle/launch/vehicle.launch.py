@@ -26,7 +26,9 @@ def generate_launch_description():
             PythonExpression(
                 ["'/dev/serial0' if '", platform, "' == 'onboard' else '/dev/ttyACM0'"]
             ),
-            "-v6",
+            "-b",
+            "1000000",
+            "-v4",
         ],
         name="micro_ros_agent_docker",
         output="screen",

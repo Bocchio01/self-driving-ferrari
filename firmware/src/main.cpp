@@ -24,7 +24,7 @@ PID controller_angular_velocity(071.8f / 100.0f, 043.1f / 100.0f, 000.0f / 100.0
 PID controller_angular_position(575.0f / 100.0f, 000.0f / 100.0f, 014.0f / 100.0f);
 
 // Sensors
-sensors::RotaryEncoder rotary_encoder(&Wire2, 26);
+sensors::RotaryEncoder encoder(&Wire2, 26);
 
 // Network
 Network &network = Network::getInstance();
@@ -38,14 +38,8 @@ float feedbackAngularPosition();
 
 void setup()
 {
-    // Serial setup for debugging
-    Serial.begin(115200);
-
-    // Required by RotaryEncoder library to initialize I2C communication
-    Wire2.begin();
-    Wire2.setClock(400000); // 400kHz I2C clock speed
-
-    delay(50);
+    Serial.begin(115200); // Debugging serial port
+    Wire2.begin();        // Required by RotaryEncoder
 
     // Vehicle setup
     actuator_propulsion.setControllerAngularVelocity(&controller_angular_velocity, feedbackAngularVelocity);
@@ -54,9 +48,9 @@ void setup()
     ferrari.bindKinematics(&ackermann_kinematics);
 
     // Sensors setup
-    rotary_encoder.begin();
-    rotary_encoder.setDirection(AS5600::Direction::COUNTER_CLOCKWISE);
-    rotary_encoder.setZero();
+    encoder.begin();
+    encoder.setDirection(AS5600::Direction::COUNTER_CLOCKWISE);
+    encoder.setZero();
 
     // Network setup
     network.addPublisher(publisher_odometry);
@@ -83,13 +77,9 @@ void loop()
             ferrari.executeEmergencyStop();
         }
 
-        // Sensor updates
-        rotary_encoder.update();
-
-        // Vehicle update
+        encoder.update();
         ferrari.update();
 
-        // Publish data
         if (network.isConnected())
         {
             publisher_odometry.publish();
@@ -97,19 +87,24 @@ void loop()
     }
 }
 
+// ########################################################################################
+// We need to apply these correction given that the feedback from the rotary encoder is
+// relative to the left wheel, while the speed command is relative to the center of the
+// rear axle.
+// ########################################################################################
+
 float correctionFactor(float steering_angle)
 {
     using Kinematic = vehicle::configs::Kinematic;
     return 1.0f - ((Kinematic::TRACK_WIDTH * tan(steering_angle)) / (2.0f * Kinematic::WHEELBASE));
 }
 
-// We need to apply these correction given that the feedback from the rotary encoder is relative to the left wheel, while the speed command is relative to the center of the rear axle.
 float feedbackAngularVelocity()
 {
     using Kinematic = vehicle::configs::Kinematic;
 
     float current_steering_angle = actuator_steering.getCurrentSteeringAngle();
-    float left_wheel_angular_velocity = rotary_encoder.data().angular_speed / Kinematic::BELT_RATIO;
+    float left_wheel_angular_velocity = encoder.data().angular_speed / Kinematic::BELT_RATIO;
 
     // vl = v - (v * tan(delta) / L) * (T / 2) -> v = vl / (1 - (T * tan(delta)) / (2 * L))
     return left_wheel_angular_velocity / correctionFactor(current_steering_angle);
@@ -123,7 +118,7 @@ float feedbackAngularPosition()
     static float center_cumulative_rad = 0.0f;
 
     float current_steering_angle = actuator_steering.getCurrentSteeringAngle();
-    float current_left_rad = rotary_encoder.data().cumulative_angle / Kinematic::BELT_RATIO;
+    float current_left_rad = encoder.data().cumulative_angle / Kinematic::BELT_RATIO;
 
     // Apply the steering correction ONLY to the tiny distance moved in this specific tick
     center_cumulative_rad += (current_left_rad - last_left_rad) / correctionFactor(current_steering_angle);

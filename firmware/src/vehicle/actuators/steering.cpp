@@ -34,7 +34,6 @@ bool Steering::disarm()
 {
     this->is_armed = false;
     this->detach();
-    digitalWrite(this->pin_signal, LOW); // CHECK THIS
 
     return true;
 }
@@ -46,12 +45,10 @@ bool Steering::update()
         return false;
     }
 
-    if (this->current_steering_angle != this->target_steering_angle)
-    {
-        this->servo_pwm = vehicle::configs::Actuators::STEERING_ANGLE_TO_SERVO_PWM(this->target_steering_angle);
-        this->write(this->servo_pwm);
-        this->current_steering_angle = this->target_steering_angle;
-    }
+    this->current_steering_angle = this->target_steering_angle;
+    this->servo_pwm = vehicle::configs::Actuators::STEERING_ANGLE_TO_SERVO_PWM(this->target_steering_angle);
+    this->current_microseconds = static_cast<uint16_t>(MIN_PULSE_WIDTH + (this->servo_pwm * (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) / 180.0f));
+    this->writeMicroseconds(this->current_microseconds);
 
     return true;
 }

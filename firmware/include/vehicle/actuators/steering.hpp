@@ -32,7 +32,8 @@ namespace vehicle::actuators
     private:
         const uint8_t pin_signal;
 
-        uint8_t servo_pwm = 0;
+        float servo_pwm = 0.0f; // For higher precision, we store the PWM as a float before converting to microseconds
+        uint16_t current_microseconds = 0;
         float current_steering_angle = 0.0f;
         float target_steering_angle = 0.0f;
     };

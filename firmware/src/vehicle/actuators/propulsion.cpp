@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <Ramp.h>
-#include <rcl/rcl.h>
 #include <pid.hpp>
 
 #include "vehicle/configs.hpp"
@@ -93,7 +91,14 @@ void Propulsion::setControllerAngularPosition(PID *controller_angular_position, 
 
 bool Propulsion::arm()
 {
+    if (this->is_armed)
+    {
+        return true;
+    }
+
+    this->reset();
     digitalWrite(this->STBY, HIGH);
+
     this->is_armed = true;
 
     return true;
@@ -101,7 +106,14 @@ bool Propulsion::arm()
 
 bool Propulsion::disarm()
 {
+    if (!this->is_armed)
+    {
+        return true;
+    }
+
+    this->reset();
     digitalWrite(this->STBY, LOW);
+
     this->is_armed = false;
 
     return true;
@@ -163,14 +175,31 @@ bool Propulsion::update()
 
 bool Propulsion::reset()
 {
-    this->setTargetAngularVelocity(0.0f);
-    this->update();
+    this->target_angular_velocity = NAN;
+    this->target_angular_position = NAN;
+    this->target_angular_position_last = NAN;
+
+    if (this->controller_angular_velocity != nullptr)
+    {
+        this->controller_angular_velocity->reset();
+    }
+
+    if (this->controller_angular_position != nullptr)
+    {
+        this->controller_angular_position->reset();
+    }
+
+    this->motor_pwm = 0;
+    digitalWrite(this->AIN1, LOW);
+    digitalWrite(this->AIN2, LOW);
+    analogWrite(this->PWMA, 0);
 
     return true;
 }
 
 bool Propulsion::brake()
 {
+    this->reset();
     digitalWrite(this->AIN1, HIGH);
     digitalWrite(this->AIN2, HIGH);
 

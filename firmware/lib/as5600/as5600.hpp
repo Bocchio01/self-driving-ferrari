@@ -378,7 +378,7 @@ public:
     bool setMaxAngle(uint16_t value) { return writeRegister(Register::max_angle, value, (uint16_t)(RESOLUTION - 1)); }
     bool setConfiguration(const Configuration &config);
 
-protected:
+private:
     static constexpr uint16_t RESOLUTION = 4096;
 
     TwoWire *I2C_ = nullptr;
