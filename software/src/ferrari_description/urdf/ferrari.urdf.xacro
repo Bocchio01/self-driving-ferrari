@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<robot name="ferrari_vehicle"
+    xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Materials -->
+    <material name="black">
+        <color rgba="0.0 0.0 0.0 1.0"/>
+    </material>
+    <material name="red">
+        <color rgba="0.8 0.0 0.0 1.0"/>
+    </material>
+
+    <!-- Vehicle Dimensions (Forced to floats to prevent integer division zeroing) -->
+    <xacro:property name="scale" value="${1.0/12.0}"/>
+    <xacro:property name="length" value="${4.512*scale}"/>
+    <xacro:property name="width" value="${2.04*scale}"/>
+    <xacro:property name="height" value="${1.080*scale}"/>
+    <xacro:property name="wheelbase" value="${2.600*scale+0.004}"/>
+    <xacro:property name="wheel_diameter" value="${19.0*2.54/100.0*scale}"/>
+    <xacro:property name="wheel_thickness" value="${0.285*scale}"/>
+    <xacro:property name="floor_clearance" value="${0.110*scale}"/>
+
+    <!-- Inertia Macros -->
+    <xacro:macro name="box_inertia" params="x y z m">
+        <inertia ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0" iyy="${m*(x*x+z*z)/12}" iyz="0" izz="${m*(x*x+y*y)/12}" />
+    </xacro:macro>
+
+    <xacro:macro name="cylinder_inertia" params="m r h">
+        <inertia ixx="${m*(3*r*r+h*h)/12}" ixy="0" ixz="0" iyy="${m*r*r/2}" iyz="0" izz="${m*(3*r*r+h*h)/12}"/>
+    </xacro:macro>
+
+    <!-- Wheel Macro -->
+    <xacro:macro name="wheel" params="name radius width mass">
+        <link name="${name}">
+            <collision>
+                <origin xyz="0 ${-wheel_thickness/2} 0" rpy="${pi/2} 0 0" />
+                <geometry>
+                    <cylinder length="${width}" radius="${radius}"/>
+                </geometry>
+            </collision>
+            <visual>
+                <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}"/>
+                <geometry>
+                    <mesh filename="package://ferrari_description/meshes/F430_wheel.obj" scale="${scale} ${scale} ${scale}"/>
+                </geometry>
+            </visual>
+            <inertial>
+                <origin xyz="0 ${-wheel_thickness/2} 0" rpy="${pi/2} 0 0" />
+                <mass value="${mass}"/>
+                <xacro:cylinder_inertia m="${mass}" r="${radius}" h="${width}" />
+            </inertial>
+        </link>
+    </xacro:macro>
+
+    <!-- Front Steerable Wheel Macro -->
+    <xacro:macro name="front_wheel" params="wheel_name reflect">
+        <xacro:wheel name="${wheel_name}" radius="${wheel_diameter/2}" width="${wheel_thickness}" mass="6"/>
+
+        <link name="${wheel_name}_assembly"/>
+
+        <joint name="${wheel_name}_hinge" type="revolute">
+            <parent link="chassis"/>
+            <child link="${wheel_name}_assembly"/>
+            <origin xyz="${wheelbase} ${reflect*(width/2 - wheel_thickness)} ${wheel_diameter/2}" rpy="0 0 ${(reflect-1)/2*pi}" />
+            <axis xyz="0 0 1" />
+            <limit lower="${-pi/2}" upper="${pi/2}" effort="100.0" velocity="5.0"/>
+        </joint>
+
+        <joint name="${wheel_name}_rotate" type="continuous">
+            <parent link="${wheel_name}_assembly"/>
+            <child link="${wheel_name}"/>
+            <origin xyz="0 ${wheel_thickness/2} 0" rpy="0 0 0" />
+            <axis xyz="0 ${reflect} 0" />
+            <limit effort="100.0" velocity="50.0"/>
+        </joint>
+    </xacro:macro>
+
+    <!-- Rear Fixed-Axle Wheel Macro -->
+    <xacro:macro name="rear_wheel" params="wheel_name reflect">
+        <xacro:wheel name="${wheel_name}" radius="${wheel_diameter/2}" width="${wheel_thickness}" mass="6" />
+
+        <joint name="${wheel_name}_rotate" type="continuous">
+            <parent link="chassis"/>
+            <child link="${wheel_name}"/>
+            <origin xyz="0 ${reflect*(width/2-wheel_thickness/2)} ${wheel_diameter/2}" rpy="0 0 ${(reflect-1)/2*pi}" />
+            <axis xyz="0 ${reflect} 0" />
+            <limit effort="100.0" velocity="50.0"/>
+        </joint>
+    </xacro:macro>
+
+    <!-- Base link -->
+    <link name="base_link" />
+
+    <joint name="base_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="chassis"/>
+    </joint>
+
+    <!-- Chassis -->
+    <link name="chassis">
+        <collision>
+            <origin xyz="${wheelbase/2 + 0.010} 0 ${height/2 + floor_clearance}" rpy="0 0 0"/>
+            <geometry>
+                <box size="${length} ${width} ${height}"/>
+            </geometry>
+        </collision>
+
+        <visual>
+            <origin xyz="${wheelbase/2 + 0.010} 0 0" rpy="${pi/2} 0 ${pi/2}"/>
+            <geometry>
+                <mesh filename="package://ferrari_description/meshes/F430_chassis.obj" scale="${scale} ${scale} ${scale}"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <mass value="1.0"/>
+            <origin xyz="${wheelbase/2 + 0.010} 0 ${height/2 + floor_clearance}" rpy="0 0 0"/>
+            <xacro:box_inertia x="${length}" y="${width}" z="${height}" m="1.0" />
+        </inertial>
+    </link>
+
+    <!-- Wheels -->
+    <xacro:front_wheel wheel_name="front_wheel_right" reflect="-1" />
+    <xacro:front_wheel wheel_name="front_wheel_left" reflect="1" />
+    <xacro:rear_wheel wheel_name="rear_wheel_right" reflect="-1" />
+    <xacro:rear_wheel wheel_name="rear_wheel_left" reflect="1" />
+
+</robot>

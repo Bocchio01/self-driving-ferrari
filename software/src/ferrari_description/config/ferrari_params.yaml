@@ -1,0 +1,12 @@
+/**:
+  ros__parameters:
+    # Control / Kinematics Limits
+    max_steering_angle: 0.3448
+    max_speed: 1.0
+    max_acceleration: 3.0
+
+    # Physical Geometry (Xacro will use these)
+    wheelbase: 0.218
+    track_width: 0.135
+    wheel_diameter: 0.0575
+    wheel_thickness: 0.025
