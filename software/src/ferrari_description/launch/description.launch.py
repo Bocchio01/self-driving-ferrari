@@ -46,7 +46,7 @@ def generate_launch_description():
         package="robot_state_publisher",
         executable="robot_state_publisher",
         name="robot_state_publisher",
-        namespace="ferrari_description",
+        namespace="description",
         parameters=[{"robot_description": robot_description}],
     )
 
@@ -54,7 +54,7 @@ def generate_launch_description():
         package="joint_state_publisher_gui",
         executable="joint_state_publisher_gui",
         name="joint_state_publisher_gui",
-        namespace="ferrari_description",
+        namespace="description",
         parameters=[{"robot_description": robot_description}],
     )
 
@@ -62,9 +62,10 @@ def generate_launch_description():
         package="ferrari_description",
         executable="ferrari_state_publisher.py",
         name="ferrari_state_publisher_node",
-        namespace="ferrari_description",
+        namespace="description",
         parameters=[vehicle_config],
         remappings=[
+            ("odom", "/vehicle/odom"),
             ("ackermann_cmd", "/vehicle/ackermann_cmd"),
         ],
     )
@@ -73,14 +74,14 @@ def generate_launch_description():
         package="rviz2",
         executable="rviz2",
         name="rviz2",
-        namespace="ferrari_description",
+        namespace="description",
         arguments=["-d", rviz_config_file],
     )
 
     return LaunchDescription(
         [
             vehicle_config_arg,
-            # rqt_node,
+            rqt_node,
             robot_state_publisher_node,
             # joint_state_publisher_gui_node,
             ferrari_state_publisher_node,

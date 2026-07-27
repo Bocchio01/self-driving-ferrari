@@ -9,14 +9,32 @@
 
     <buildtool_depend>ament_cmake</buildtool_depend>
 
+    <depend>ferrari_planning</depend>
+    <depend>ferrari_vehicle</depend>
+
+    <depend>eigen</depend>
+    <!-- <depend>osqp</depend> MUST be installed on the system -->
+    <!-- <depend>osqp-eigen</depend> MUST be installed on the system -->
+
     <depend>rclcpp</depend>
+    <depend>rclpy</depend>
+    <depend>rclcpp_lifecycle</depend>
+    <depend>lifecycle_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>nav_msgs</depend>
     <depend>sensor_msgs</depend>
     <depend>ackermann_msgs</depend>
     <depend>std_srvs</depend>
+    <depend>tf2</depend>
+    <depend>tf2_ros</depend>
+    <depend>tf2_geometry_msgs</depend>
+
     <exec_depend>joy</exec_depend>
 
     <test_depend>ament_lint_auto</test_depend>
     <test_depend>ament_lint_common</test_depend>
+
 
     <export>
         <build_type>ament_cmake</build_type>

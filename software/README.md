@@ -1,4 +1,4 @@
-# Software
+# Software (Ferrari F430)
 
 This is the software repository for the self-driving Ferrari project. The software is built on top of ROS2 and is designed to control the autonomous vehicle, process sensor data, and perform various tasks related to autonomous driving.
 
