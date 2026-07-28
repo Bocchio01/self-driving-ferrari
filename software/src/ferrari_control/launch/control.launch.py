@@ -163,7 +163,7 @@ def generate_launch_description():
         parameters=[
             {
                 "control_rate_hz": 30.0,
-                "teleop_timeout_s": 0.25,
+                "control_timeout_s": 0.25,
             },
         ],
     )
@@ -176,7 +176,7 @@ def generate_launch_description():
         output="screen",
         condition=IfCondition(PythonExpression(["'", platform, "' == 'ground'"])),
         remappings=[
-            ("odom", "/vehicle/odom"),
+            ("odom", "/localization/odom"),
             ("local_trajectory", "/planning/local_trajectory"),
             ("ackermann_cmd", "/vehicle/ackermann_cmd"),
         ],

@@ -19,7 +19,7 @@ def generate_launch_description():
         namespace="planning",
         output="screen",
         remappings=[
-            ("odom", "/vehicle/odom"),
+            ("odom", "/localization/odom"),
         ],
     )
 
@@ -30,7 +30,7 @@ def generate_launch_description():
         namespace="planning",
         output="screen",
         remappings=[
-            ("odom", "/vehicle/odom"),
+            ("odom", "/localization/odom"),
         ],
         parameters=[
             {

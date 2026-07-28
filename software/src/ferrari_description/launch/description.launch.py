@@ -65,7 +65,7 @@ def generate_launch_description():
         namespace="description",
         parameters=[vehicle_config],
         remappings=[
-            ("odom", "/vehicle/odom"),
+            ("odom", "/localization/odom"),
             ("ackermann_cmd", "/vehicle/ackermann_cmd"),
         ],
     )

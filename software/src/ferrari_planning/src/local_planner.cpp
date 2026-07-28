@@ -17,8 +17,8 @@ LocalPlannerNode::LocalPlannerNode(const rclcpp::NodeOptions &options)
 
     this->local_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("local_path", 10);
     this->global_path_sub_ = this->create_subscription<nav_msgs::msg::Path>("global_path", 10, std::bind(&LocalPlannerNode::globalPathCallback, this, std::placeholders::_1));
-    this->odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/vehicle/odom", 10, std::bind(&LocalPlannerNode::odomCallback, this, std::placeholders::_1));
-    this->lidar_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/vehicle/lidar", 10, std::bind(&LocalPlannerNode::lidarCallback, this, std::placeholders::_1));
+    this->odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 10, std::bind(&LocalPlannerNode::odomCallback, this, std::placeholders::_1));
+    this->lidar_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>("lidar", 10, std::bind(&LocalPlannerNode::lidarCallback, this, std::placeholders::_1));
 
     auto timer_period = std::chrono::duration<double>(1.0 / update_rate_hz);
     timer_ = this->create_wall_timer(

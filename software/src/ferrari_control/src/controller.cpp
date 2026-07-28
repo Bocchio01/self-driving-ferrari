@@ -20,7 +20,7 @@ Controller::Controller(const std::string &cmd_pub_name, const std::string &node_
     double control_rate_hz_ = this->declare_parameter<double>("control_rate_hz", 50.0);
     control_period_ = std::chrono::duration<double>(1.0 / control_rate_hz_);
 
-    odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/vehicle/odom", 10, std::bind(&Controller::odomCallback, this, std::placeholders::_1));
+    odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/localization/odom", 10, std::bind(&Controller::odomCallback, this, std::placeholders::_1));
     local_trajectory_sub_ = this->create_subscription<ferrari_planning::msg::Trajectory>("/planning/local_trajectory", 10, std::bind(&Controller::localTrajectoryCallback, this, std::placeholders::_1));
 }
 

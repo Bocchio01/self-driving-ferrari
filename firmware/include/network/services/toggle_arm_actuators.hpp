@@ -19,7 +19,7 @@ public:
             &service_,
             node,
             ROSIDL_GET_SRV_TYPE_SUPPORT(std_srvs, srv, Trigger),
-            "/vehicle/toggle_arm_actuators"));
+            "/vehicle/toggle_actuators"));
 
         RCCHECK(rclc_executor_add_service_with_context(
             executor,
