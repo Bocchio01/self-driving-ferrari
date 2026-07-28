@@ -9,13 +9,13 @@
 #include "vehicle/actuators/propulsion.hpp"
 #undef private
 #undef protected
-#include "sensors/rotary_encoder.hpp"
+#include "sensors/encoder.hpp"
 
 PID controller_angular_velocity(071.8f / 100.0f, 043.1f / 100.0f, 000.0f / 100.0f);
 PID controller_angular_position(575.0f / 100.0f, 000.0f / 100.0f, 014.0f / 100.0f);
 vehicle::actuators::Propulsion actuator_propulsion(29, 30, 31, 32);
 
-sensors::RotaryEncoder encoder(&Wire2, 26);
+sensors::Encoder encoder(&Wire2, 26);
 
 void PWMToSpeedCalibration();
 void speedControllerTuning();

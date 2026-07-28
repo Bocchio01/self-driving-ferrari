@@ -61,11 +61,11 @@ namespace vehicle::configs
     {
         static constexpr float WHEELBASE = 0.218;                          // [m]
         static constexpr float TRACK_WIDTH = 0.135;                        // [m]
-        static constexpr float BELT_RATIO = 0.75f;                         // encoder:wheel rotation ratio
+        static constexpr float BELT_RATIO = 0.75f;                         // [-] encoder:wheel rotation ratio
         static constexpr float WHEEL_RADIUS = 0.0575f / 2.0f;              // [m]
         static constexpr float MAX_SPEED = 1.00f;                          // [m/s]
         static constexpr float MAX_STEERING_ANGLE = 20.0f * (PI / 180.0f); // [rad]
-        static constexpr float MAX_ACCELERATIONS[3] = {1.0f, 3.0f, 9.0f};  // [m/s^2]
+        // static constexpr float MAX_ACCELERATIONS[3] = {1.0f, 3.0f, 9.0f};  // [m/s^2]
     };
 
     struct Actuators

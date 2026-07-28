@@ -40,16 +40,27 @@ void Ackermann::setMotionCommand(const void *motion_cmd_)
 
     const ackermann_msgs__msg__AckermannDriveStamped &motion_cmd = *static_cast<const ackermann_msgs__msg__AckermannDriveStamped *>(motion_cmd_);
 
+    // Constraining the target values to the limits defined in the configuration
     float target_steering = constrain(motion_cmd.drive.steering_angle, -Kinematic::MAX_STEERING_ANGLE, Kinematic::MAX_STEERING_ANGLE);
     float target_speed = constrain(motion_cmd.drive.speed, -Kinematic::MAX_SPEED, Kinematic::MAX_SPEED);
 
-    float speed_delta = target_speed - this->actuator_propulsion->getCurrentAngularVelocity() * Kinematic::WHEEL_RADIUS;
-    float acceleration = (motion_cmd.drive.acceleration > 0.001f) ? motion_cmd.drive.acceleration : Kinematic::MAX_ACCELERATIONS[static_cast<uint8_t>(this->driving_style)];
-    unsigned int speed_duration = abs(target_speed) < 0.15f ? 0 : static_cast<unsigned int>((abs(speed_delta) / acceleration) * 1000.0f);
+    // Calculating the duration for the ramping based on the commanded velocities and accelerations
+    unsigned int steering_duration = 0;
+    unsigned int speed_duration = 0;
 
-    float steering_delta = target_steering - this->actuator_steering->getCurrentSteeringAngle();
-    unsigned int steering_duration = (motion_cmd.drive.steering_angle_velocity > 0.001f) ? static_cast<unsigned int>((abs(steering_delta) / motion_cmd.drive.steering_angle_velocity) * 1000.0f) : 0;
+    if (motion_cmd.drive.steering_angle_velocity > 0.001f)
+    {
+        float steering_delta = target_steering - this->actuator_steering->getCurrentSteeringAngle();
+        steering_duration = static_cast<unsigned int>(abs(steering_delta) / motion_cmd.drive.steering_angle_velocity * 1000.0f);
+    }
 
+    if (motion_cmd.drive.acceleration > 0.001f)
+    {
+        float speed_delta = target_speed - this->actuator_propulsion->getCurrentAngularVelocity() * Kinematic::WHEEL_RADIUS;
+        speed_duration = static_cast<unsigned int>(abs(speed_delta) / motion_cmd.drive.acceleration * 1000.0f);
+    }
+
+    // Setting the ramp targets for steering and speed with the calculated durations
     this->ramp_target_steering.go(target_steering, steering_duration, ramp_mode::SINUSOIDAL_INOUT);
     this->ramp_target_velocity.go(target_speed, speed_duration, ramp_mode::SINUSOIDAL_INOUT);
 }

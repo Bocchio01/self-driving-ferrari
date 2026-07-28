@@ -4,7 +4,7 @@
 
 #include "network/network.hpp"
 #include "network/virtuals/publisher.hpp"
-#include "sensors/rotary_encoder.hpp"
+#include "sensors/encoder.hpp"
 #include "sensors/imu.hpp"
 
 class PublisherOdom : public IPublisher

@@ -8,23 +8,27 @@
 #include "vehicle/actuators/steering.hpp"
 #include "vehicle/actuators/propulsion.hpp"
 
-#include "sensors/rotary_encoder.hpp"
+#include "sensors/imu.hpp"
+#include "sensors/encoder.hpp"
 
 #include "network/network.hpp"
 #include "network/subscribers/ackermann_cmd.hpp"
 #include "network/services/toggle_arm_actuators.hpp"
 #include "network/publishers/odom.hpp"
 
+#define CRASH_THRESHOLD powf(2.5, 2) // (2.5G)^2 Threshold for triggering a crash event
+
 // Vehicle
 vehicle::Vehicle<vehicle::kinematics::Ackermann> ferrari;
 vehicle::kinematics::Ackermann ackermann_kinematics;
-vehicle::actuators::Steering actuator_steering(2);
+vehicle::actuators::Steering actuator_steering(28);
 vehicle::actuators::Propulsion actuator_propulsion(29, 30, 31, 32);
 PID controller_angular_velocity(071.8f / 100.0f, 043.1f / 100.0f, 000.0f / 100.0f);
 PID controller_angular_position(575.0f / 100.0f, 000.0f / 100.0f, 014.0f / 100.0f);
 
 // Sensors
-sensors::RotaryEncoder encoder(&Wire2, 26);
+sensors::IMU imu(&Wire1);
+sensors::Encoder encoder(&Wire2, 26);
 
 // Network
 Network &network = Network::getInstance();
@@ -39,7 +43,8 @@ float feedbackAngularPosition();
 void setup()
 {
     Serial.begin(115200); // Debugging serial port
-    Wire2.begin();        // Required by RotaryEncoder
+    Wire1.begin();        // Required by IMU
+    Wire2.begin();        // Required by Encoder
 
     // Vehicle setup
     actuator_propulsion.setControllerAngularVelocity(&controller_angular_velocity, feedbackAngularVelocity);
@@ -48,6 +53,12 @@ void setup()
     ferrari.bindKinematics(&ackermann_kinematics);
 
     // Sensors setup
+    imu.begin();
+    imu.setAccelRange(MPU6050::AccelRange::G_2);
+    imu.setGyroRange(MPU6050::GyroRange::DPS_250);
+    imu.setDLPFBandwidth(MPU6050::DLPFBandwidth::HZ_260);
+    imu.setGyroOffset({79, -4, 85});
+    imu.setAccelOffset({617, 116, 36});
     encoder.begin();
     encoder.setDirection(AS5600::Direction::COUNTER_CLOCKWISE);
     encoder.setZero();
@@ -71,6 +82,15 @@ void loop()
         last_loop_time = current_time;
 
         network.spin();
+        imu.update();
+
+        // Trigger crash on sudden lateral (Y) or longitudinal (X) spikes
+        // We disarm the vehicle to prevent further motion after a crash is detected
+        if (powf(imu.data().accel_x, 2) + powf(imu.data().accel_y, 2) > CRASH_THRESHOLD)
+        {
+            ferrari.executeEmergencyStop();
+            ferrari.disarm();
+        }
 
         if (sub_control_cmd.checkTimeout())
         {

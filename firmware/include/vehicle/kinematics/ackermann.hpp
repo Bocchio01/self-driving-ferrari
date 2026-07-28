@@ -13,13 +13,6 @@ namespace vehicle::kinematics
     {
 
     public:
-        enum class DrivingStyle : uint8_t
-        {
-            CALM,
-            BALANCED,
-            NERVOUS
-        };
-
         Ackermann();
 
         void bindActuators(vehicle::actuators::Steering &actuator_steering, vehicle::actuators::Propulsion &actuator_propulsion);
@@ -34,8 +27,6 @@ namespace vehicle::kinematics
         bool isArmed();
 
     private:
-        DrivingStyle driving_style = DrivingStyle::BALANCED;
-
         vehicle::actuators::Steering *actuator_steering;
         vehicle::actuators::Propulsion *actuator_propulsion;
 

@@ -6,7 +6,7 @@
 namespace sensors
 {
 
-    struct RotaryEncoderOutput
+    struct EncoderOutput
     {
         // Cumulative angle in radians
         int32_t cumulative_angle;
@@ -15,11 +15,11 @@ namespace sensors
         float angular_speed;
     };
 
-    class RotaryEncoder : public interfaces::Sensor<RotaryEncoderOutput>, public AS5600
+    class Encoder : public interfaces::Sensor<EncoderOutput>, public AS5600
     {
 
     public:
-        RotaryEncoder(TwoWire *i2c, uint8_t DIR = AS5600::NO_PIN, uint8_t OUT = AS5600::NO_PIN)
+        Encoder(TwoWire *i2c, uint8_t DIR = AS5600::NO_PIN, uint8_t OUT = AS5600::NO_PIN)
             : AS5600(i2c, DIR, OUT)
         {
         }
@@ -37,7 +37,7 @@ namespace sensors
             }
         }
 
-        RotaryEncoderOutput data() override
+        EncoderOutput data() override
         {
             int32_t cumulative_angle = getCumulativeAngle(AngleUnit::RADIANS);
 

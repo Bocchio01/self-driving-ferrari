@@ -1,34 +1,41 @@
 #pragma once
 
-#include <Wire.h>
+#include <mpu6050.hpp>
 #include "sensors/sensor.hpp"
 
 namespace sensors
 {
-
-    struct InertiaMeasurementUnitOutput
+    struct IMUOutput
     {
-        float quaternion_x;
-        float quaternion_y;
-        float quaternion_z;
-        float quaternion_w;
-        float gyro_x;
-        float gyro_y;
-        float gyro_z;
+        float accel_x; // g (Longitudinal)
+        float accel_y; // g (Lateral)
+        float accel_z; // g (Vertical)
+        float gyro_x;  // deg/s (Roll)
+        float gyro_y;  // deg/s (Pitch)
+        float gyro_z;  // deg/s (Yaw)
     };
 
-    class InertiaMeasurementUnit : public interfaces::Sensor<InertiaMeasurementUnitOutput>, public AS5600
+    class IMU : public interfaces::Sensor<IMUOutput>, public MPU6050
     {
-
     public:
-        InertiaMeasurementUnit(TwoWire *i2c)
+        IMU(TwoWire *i2c, uint8_t address = MPU6050::DEFAULT_ADDRESS)
+            : MPU6050(i2c, address) {}
+
+        void update()
         {
+            MPU6050::update();
+
+            accel = getAcceleration();
+            gyro = getGyroscope();
         }
 
-        InertiaMeasurementUnitOutput data() override
+        IMUOutput data() override
         {
-            return {0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f};
+            return {accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z};
         }
+
+    private:
+        MPU6050::Axis3<float> accel;
+        MPU6050::Axis3<float> gyro;
     };
-
 }
