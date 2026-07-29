@@ -102,6 +102,9 @@ void Ackermann::update()
 
 void Ackermann::executeEmergencyStop()
 {
+    this->ramp_target_steering.go(0.0f);
+    this->ramp_target_velocity.go(0.0f);
+
     this->actuator_steering->reset();
     this->actuator_propulsion->reset();
     this->actuator_propulsion->brake();

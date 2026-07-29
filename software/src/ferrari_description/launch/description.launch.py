@@ -81,7 +81,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             vehicle_config_arg,
-            rqt_node,
+            # rqt_node,
             robot_state_publisher_node,
             # joint_state_publisher_gui_node,
             ferrari_state_publisher_node,

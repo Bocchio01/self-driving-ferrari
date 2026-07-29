@@ -22,20 +22,20 @@
 #define MAX_SERVICES 8
 #define MAX_PUBLISHERS 8
 
-#define RCCHECK(fn)                                                                                                                                         \
-    {                                                                                                                                                       \
-        rcl_ret_t temp_rc = fn;                                                                                                                             \
-        if ((temp_rc != RCL_RET_OK))                                                                                                                        \
-        {                                                                                                                                                   \
-            Serial.println(String("Error at ") + __FILE__ + ":" + String(__LINE__) + " - " + String(temp_rc) + " - " + String(rcl_get_error_string().str)); \
-            rcl_reset_error();                                                                                                                              \
-            for (uint8_t i = 0; i < 10; ++i)                                                                                                                \
-            {                                                                                                                                               \
-                digitalToggle(13);                                                                                                                          \
-                delay(100);                                                                                                                                 \
-            }                                                                                                                                               \
-            return;                                                                                                                                         \
-        }                                                                                                                                                   \
+#define RCCHECK(fn)                                                                                                                                             \
+    {                                                                                                                                                           \
+        rcl_ret_t temp_rc = fn;                                                                                                                                 \
+        if ((temp_rc != RCL_RET_OK))                                                                                                                            \
+        {                                                                                                                                                       \
+            SerialUSB1.println(String("Error at ") + __FILE__ + ":" + String(__LINE__) + " - " + String(temp_rc) + " - " + String(rcl_get_error_string().str)); \
+            rcl_reset_error();                                                                                                                                  \
+            for (uint8_t i = 0; i < 10; ++i)                                                                                                                    \
+            {                                                                                                                                                   \
+                digitalToggle(13);                                                                                                                              \
+                delay(100);                                                                                                                                     \
+            }                                                                                                                                                   \
+            return;                                                                                                                                             \
+        }                                                                                                                                                       \
     }
 
 #define RCSOFTCHECK(fn)              \
@@ -148,8 +148,8 @@ public:
             if (millis() - last_ping_time > 2000)
             {
                 last_ping_time = millis();
-                // Give it a 100ms timeout to account for heavy serial traffic
-                if (rmw_uros_ping_agent(100, 1) != RMW_RET_OK)
+                // Give it a 1000ms timeout to account for heavy serial traffic
+                if (rmw_uros_ping_agent(300, 3) != RMW_RET_OK)
                 {
                     state_ = AgentState::AGENT_DISCONNECTED;
                     break;

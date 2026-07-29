@@ -21,6 +21,14 @@ def generate_launch_description():
         remappings=[
             ("odom", "/localization/odom"),
         ],
+        parameters=[
+            {
+                # "track_name":"Monza",
+                # "track_name": "Silverstone",
+                "track_name": "Spa",
+                "scale": 12.0,
+            }
+        ],
     )
 
     local_planner_node = Node(

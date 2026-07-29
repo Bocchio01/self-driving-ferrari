@@ -61,6 +61,9 @@ LifecycleNodeInterface::CallbackReturn MpcControllerNode::on_configure(const rcl
     Eigen::VectorXd s_min = Eigen::Map<Eigen::VectorXd>(s_min_param.data(), s_min_param.size());
     Eigen::VectorXd s_max = Eigen::Map<Eigen::VectorXd>(s_max_param.data(), s_max_param.size());
 
+    s_min(3) = -1 / 4 * this->max_speed_;
+    s_max(3) = +this->max_speed_;
+
     Eigen::VectorXd u_min(2), u_max(2);
     const double accel_limit = std::min(max_longitudinal_acceleration_, friction_coefficient_ * gravity_);
     u_min << -accel_limit, -max_steering_angle_;

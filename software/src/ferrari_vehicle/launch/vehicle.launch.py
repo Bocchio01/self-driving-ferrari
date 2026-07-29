@@ -24,7 +24,7 @@ def generate_launch_description():
             "/dev/shm:/dev/shm",
             "--privileged",
             "--net=host",
-            "microros/micro-ros-agent:jazzy",
+            "micro-ros-agent-ferrari:jazzy",
             "serial",
             "--dev",
             PythonExpression(
@@ -37,6 +37,16 @@ def generate_launch_description():
         name="micro_ros_agent_docker",
         output="screen",
         emulate_tty=True,
+        condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
+    )
+
+    odom_proxy_node = Node(
+        package="ferrari_vehicle",
+        executable="odom_proxy_node",
+        name="odom_proxy_node",
+        namespace="vehicle",
+        output="screen",
+        parameters=[vehicle_config],
         condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
     )
 
@@ -55,6 +65,7 @@ def generate_launch_description():
             platform_arg,
             vehicle_config_arg,
             micro_ros_agent,
+            odom_proxy_node,
             ferrari_twin_node,
         ]
     )

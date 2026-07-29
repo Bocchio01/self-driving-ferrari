@@ -58,14 +58,21 @@ private:
     ackermann_msgs__msg__AckermannDriveStamped msg_;
 
     uint32_t timeout_ms_;
-    uint32_t last_message_time_;
+    volatile uint32_t last_message_time_;
 
     static void callback(const void *msgin, void *context)
     {
         SubscriberAckermannCmd *self = static_cast<SubscriberAckermannCmd *>(context);
         vehicle::interfaces::Vehicle *vehicle = Network::getVehicle();
 
+        // Briefly disable interrupts to ensure the ISR does not read
+        // the motion commands while they are being updated.
+        noInterrupts();
+
         self->last_message_time_ = millis();
         vehicle->setMotionCommand(msgin);
+
+        // Re-enable interrupts so the control loop can resume
+        interrupts();
     }
 };

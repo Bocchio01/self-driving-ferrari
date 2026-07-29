@@ -4,6 +4,7 @@
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 
 #include "ferrari_vehicle/vehicle_model_factory.hpp"
+#include "ferrari_vehicle/msg/odom_lite.hpp"
 
 using namespace vehicle_models;
 using namespace vehicle_models::ackermann::kinematic_cartesian;
@@ -25,7 +26,7 @@ public:
         model_ = std::get<Model>(model_variant);
 
         cmd_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("ackermann_cmd", 10, std::bind(&FerrariTwinNode::cmd_callback, this, _1));
-        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+        odom_pub_ = this->create_publisher<ferrari_vehicle::msg::OdomLite>("odom", 10);
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(dt * 1000)),
@@ -48,23 +49,23 @@ private:
         x_ = Model::toStruct(x);
 
         // Publish Odometry
-        auto odom_msg = nav_msgs::msg::Odometry();
+        auto odom_msg = ferrari_vehicle::msg::OdomLite();
         odom_msg.header.stamp = this->get_clock()->now();
         odom_msg.header.frame_id = "odom";
         odom_msg.child_frame_id = "base_link";
 
-        odom_msg.pose.pose.position.x = x_.x;
-        odom_msg.pose.pose.position.y = x_.y;
+        odom_msg.pose.position.x = x_.x;
+        odom_msg.pose.position.y = x_.y;
 
         tf2::Quaternion q;
         q.setRPY(0, 0, x_.yaw);
-        odom_msg.pose.pose.orientation.x = q.x();
-        odom_msg.pose.pose.orientation.y = q.y();
-        odom_msg.pose.pose.orientation.z = q.z();
-        odom_msg.pose.pose.orientation.w = q.w();
+        odom_msg.pose.orientation.x = q.x();
+        odom_msg.pose.orientation.y = q.y();
+        odom_msg.pose.orientation.z = q.z();
+        odom_msg.pose.orientation.w = q.w();
 
-        odom_msg.twist.twist.linear.x = u_.speed;
-        odom_msg.twist.twist.angular.z = (u_.speed / model_.params().wheelbase) * std::tan(u_.steering_angle);
+        odom_msg.twist.linear.x = u_.speed;
+        odom_msg.twist.angular.z = (u_.speed / model_.params().wheelbase) * std::tan(u_.steering_angle);
         odom_pub_->publish(odom_msg);
     }
 
@@ -73,7 +74,7 @@ private:
     Command u_;
 
     rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr cmd_sub_;
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+    rclcpp::Publisher<ferrari_vehicle::msg::OdomLite>::SharedPtr odom_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     static constexpr double dt = 0.02;
 };

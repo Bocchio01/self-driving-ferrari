@@ -4,6 +4,6 @@ docker run -it --rm \
   -v /dev/shm:/dev/shm \
   --privileged \
   --net=host \
-  microros/micro-ros-agent:jazzy \
+  micro-ros-agent-ferrari:jazzy \
   serial --dev /dev/ttyACM0 \
   -b 1000000 -v4

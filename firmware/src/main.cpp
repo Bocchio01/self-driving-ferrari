@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <IntervalTimer.h>
 #include <pid.hpp>
 
 #include "vehicle/configs.hpp"
@@ -36,15 +37,21 @@ SubscriberAckermannCmd sub_control_cmd;
 ServiceToggleArmActuators srv_toggle_arm_actuators;
 PublisherOdom publisher_odometry(10.0f);
 
+// Hardware Timer
+IntervalTimer control_loop_timer;
+
+// High-priority control loop
+void controlLoop();
+
 // Helper functions to shift the feedback from the rotary encoder to the center of the rear axle, given that the encoder is mounted on the left wheel.
 float feedbackAngularVelocity();
 float feedbackAngularPosition();
 
 void setup()
 {
-    Serial.begin(115200); // Debugging serial port
-    Wire1.begin();        // Required by IMU
-    Wire2.begin();        // Required by Encoder
+    SerialUSB1.begin(115200); // Debugging serial port
+    Wire1.begin();            // Required by IMU
+    Wire2.begin();            // Required by Encoder
 
     // Vehicle setup
     actuator_propulsion.setControllerAngularVelocity(&controller_angular_velocity, feedbackAngularVelocity);
@@ -69,42 +76,58 @@ void setup()
     network.addService(srv_toggle_arm_actuators);
     network.bindVehicle(ferrari);
     network.configure(Serial1, 1000000, "ferrari_node", RCUTILS_LOG_SEVERITY_INFO);
+
+    // Timer Setup
+    // CRITICAL: On Teensy, higher numbers mean LOWER priority.
+    // We set this to 150 so it is a lower priority than the I2C (Wire) interrupts.
+    // If this timer was higher priority than I2C, imu.update() would freeze the board forever.
+    control_loop_timer.priority(150);
+    control_loop_timer.begin(controlLoop, static_cast<unsigned long>(1000000 / vehicle::configs::Actuators::LOOP_RATE));
 }
 
 void loop()
 {
-    static unsigned long last_loop_time = 0;
-    unsigned long current_time = millis();
-    unsigned long loop_interval = 1000 / vehicle::configs::Actuators::LOOP_RATE;
+    network.spin(10);
 
-    if (current_time - last_loop_time >= loop_interval)
+    if (network.isConnected())
     {
-        last_loop_time = current_time;
-
-        network.spin();
-        imu.update();
-
-        // Trigger crash on sudden lateral (Y) or longitudinal (X) spikes
-        // We disarm the vehicle to prevent further motion after a crash is detected
-        if (powf(imu.data().accel_x, 2) + powf(imu.data().accel_y, 2) > CRASH_THRESHOLD)
-        {
-            ferrari.executeEmergencyStop();
-            ferrari.disarm();
-        }
-
-        if (sub_control_cmd.checkTimeout())
-        {
-            ferrari.executeEmergencyStop();
-        }
-
-        encoder.update();
-        ferrari.update();
-
-        if (network.isConnected())
-        {
-            publisher_odometry.publish();
-        }
+        publisher_odometry.publish();
     }
+}
+
+/**
+ * @brief High-priority control loop running on a strict hardware timer.
+ * This function interrupts the main loop, ensuring kinematics and safety
+ * execute flawlessly even if the micro-ROS serial connection drops or blocks.
+ */
+void controlLoop()
+{
+    imu.update();
+    encoder.update();
+
+    // Crash Detection: Trigger crash on sudden lateral (Y) or longitudinal (X) spikes
+    if (powf(imu.data().accel_x, 2) + powf(imu.data().accel_y, 2) > CRASH_THRESHOLD)
+    {
+        // SerialUSB1.println("Crash detected! Executing emergency stop.");
+        ferrari.executeEmergencyStop();
+        ferrari.disarm();
+    }
+
+    // Command Timeout
+    if (sub_control_cmd.checkTimeout())
+    {
+        // SerialUSB1.println("Command timeout! Executing emergency stop.");
+        ferrari.executeEmergencyStop();
+    }
+
+    // Network Disconnect
+    if (!network.isConnected())
+    {
+        // SerialUSB1.println("Network disconnected! Executing emergency stop.");
+        ferrari.executeEmergencyStop();
+    }
+
+    ferrari.update();
 }
 
 // ########################################################################################

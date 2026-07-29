@@ -2,7 +2,7 @@
   ros__parameters:
     # Vehicle Limits
     max_steering_angle: 0.3448
-    max_speed: 1.0
+    max_speed: 0.8
     max_lateral_acceleration: 3.0
     max_longitudinal_acceleration: 8.0
     max_longitudinal_deceleration: 12.0

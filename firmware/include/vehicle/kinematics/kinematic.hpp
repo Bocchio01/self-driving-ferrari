@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Arduino.h>
+
 namespace vehicle::interfaces
 {
     struct OdometryState
@@ -25,7 +27,17 @@ namespace vehicle::interfaces
         virtual ~Kinematic() = default;
 
         Type getType() const { return this->kinematic_type; }
-        OdometryState getOdometryState() const { return this->odometry_state; }
+        OdometryState getOdometryState() const
+        {
+            OdometryState safe_copy;
+
+            // Briefly pause the ISR to copy the data without it changing halfway through
+            noInterrupts();
+            safe_copy = this->odometry_state;
+            interrupts();
+
+            return safe_copy;
+        }
         void setOdometryState(const OdometryState &state) { this->odometry_state = state; }
 
         virtual void setMotionCommand(const void *motion_cmd) = 0;

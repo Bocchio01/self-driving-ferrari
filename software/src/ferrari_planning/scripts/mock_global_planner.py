@@ -15,6 +15,7 @@ class MockGlobalPlannerNode(Node):
         super().__init__("mock_global_planner_node")
         CSV_BASE_PATH = "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_planning/scripts/f1tenth_racetracks"
 
+        self.scale = self.declare_parameter("scale", 45.0).value
         track_name = self.declare_parameter("track_name", "Monza").value
 
         self.poses = []
@@ -56,8 +57,8 @@ class MockGlobalPlannerNode(Node):
                     continue
 
                 try:
-                    x = float(row[1]) / 10.0
-                    y = float(row[2]) / 10.0
+                    x = float(row[1]) / self.scale
+                    y = float(row[2]) / self.scale
                     theta = float(row[3])
 
                     pose = create_pose(x, y, theta)

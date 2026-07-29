@@ -232,7 +232,7 @@ namespace vehicle_models::ackermann::dynamic_cartesian
         }
 
     private:
-        static constexpr double kMinLongitudinalSpeed = 0.1; // [m/s], singularity guard
+        static constexpr double kMinLongitudinalSpeed = 0.8; // [m/s], singularity guard
 
         static double clampMinLongitudinalSpeed(double vx)
         {

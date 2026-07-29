@@ -1,0 +1,7 @@
+.git
+.pio
+firmware/.pio
+software/build
+software/install
+software/log
+software/rosbag
