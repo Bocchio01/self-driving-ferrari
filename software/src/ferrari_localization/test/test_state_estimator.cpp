@@ -16,6 +16,7 @@ namespace
         double yaw_rate = 0.5;
         double gyro_bias = 0.05;
         double gyro_std = 0.01;
+        double gyro_variance = 0.25;
         double wheel_speed_std = 0.05;
         double kinematic_yaw_rate_std = 0.2;
         double duration = 20.0;
@@ -43,10 +44,10 @@ namespace
             truth.y += s.speed * std::sin(yaw_mid) * s.dt;
             truth.yaw += s.yaw_rate * s.dt;
 
-            const double gyro = s.yaw_rate + s.gyro_bias + s.gyro_std * normal(rng);
-            estimator.predict(gyro, s.dt);
+            estimator.predict(s.dt);
             estimator.updateWheelSpeed(s.speed + s.wheel_speed_std * normal(rng), s.wheel_speed_std * s.wheel_speed_std);
-            estimator.updateYawRate(s.yaw_rate + s.kinematic_yaw_rate_std * normal(rng), s.kinematic_yaw_rate_std * s.kinematic_yaw_rate_std);
+            estimator.updateKinematicYawRate(s.yaw_rate + s.kinematic_yaw_rate_std * normal(rng), s.kinematic_yaw_rate_std * s.kinematic_yaw_rate_std);
+            estimator.updateGyro(s.yaw_rate + s.gyro_bias + s.gyro_std * normal(rng), s.gyro_variance);
         }
         return truth;
     }
@@ -89,12 +90,11 @@ TEST(ExtendedKalmanFilter, PredictGrowsCovarianceByProcessNoise)
 TEST(MotionModel, JacobianMatchesFiniteDifferences)
 {
     StateVector x;
-    x << 1.0, -2.0, 0.7, 1.3, 0.04;
-    const double gyro = 0.4;
+    x << 1.0, -2.0, 0.7, 1.3, 0.4, 0.04;
     const double dt = 0.05;
 
     StateMatrix analytic;
-    propagateMotion(x, gyro, dt, &analytic);
+    propagateMotion(x, dt, &analytic);
 
     StateMatrix numeric;
     const double eps = 1e-6;
@@ -103,7 +103,7 @@ TEST(MotionModel, JacobianMatchesFiniteDifferences)
         StateVector plus = x, minus = x;
         plus(j) += eps;
         minus(j) -= eps;
-        numeric.col(j) = (propagateMotion(plus, gyro, dt) - propagateMotion(minus, gyro, dt)) / (2.0 * eps);
+        numeric.col(j) = (propagateMotion(plus, dt) - propagateMotion(minus, dt)) / (2.0 * eps);
     }
 
     EXPECT_LT((analytic - numeric).cwiseAbs().maxCoeff(), 1e-6);
@@ -116,7 +116,7 @@ TEST(MotionModel, StraightLineMotion)
 
     for (int i = 0; i < 50; ++i)
     {
-        x = propagateMotion(x, 0.0, 0.02);
+        x = propagateMotion(x, 0.02);
     }
 
     EXPECT_NEAR(x(X), 2.0, 1e-9);
@@ -132,27 +132,41 @@ TEST(EkfEstimator, EstimatesGyroBiasAtStandstill)
 
     for (int i = 0; i < 250; ++i)
     {
-        const double gyro = 0.05 + normal(rng);
-        estimator.predict(gyro, 0.02);
-        estimator.updateGyroBias(gyro, 1e-4);
+        estimator.predict(0.02);
+        estimator.updateGyroBias(0.05 + normal(rng), 1e-4);
     }
 
     const Estimate e = estimator.estimate();
     EXPECT_NEAR(e.state(GYRO_BIAS), 0.05, 0.005);
-    EXPECT_NEAR(e.yaw_rate, 0.0, 0.02);
     EXPECT_LT(e.covariance(GYRO_BIAS, GYRO_BIAS), 1e-4);
 }
 
 TEST(EkfEstimator, WheelSpeedUpdateReducesSpeedUncertainty)
 {
     EkfEstimator estimator(NoiseDensities{}, InitialUncertainty{});
-    estimator.predict(0.0, 0.02);
+    estimator.predict(0.02);
     const double before = estimator.estimate().covariance(SPEED, SPEED);
 
     estimator.updateWheelSpeed(1.0, 0.0025);
 
     EXPECT_LT(estimator.estimate().covariance(SPEED, SPEED), before);
     EXPECT_GT(estimator.estimate().state(SPEED), 0.5);
+}
+
+TEST(EkfEstimator, GyroHasMinorWeightAgainstKinematicYawRate)
+{
+    EkfEstimator estimator(NoiseDensities{}, InitialUncertainty{});
+    for (int i = 0; i < 100; ++i)
+    {
+        estimator.predict(0.02);
+        estimator.updateKinematicYawRate(0.5, 0.05);
+    }
+    const double before = estimator.estimate().state(YAW_RATE);
+
+    estimator.updateGyro(0.9, 0.25);
+
+    EXPECT_NEAR(before, 0.5, 0.05);
+    EXPECT_LT(std::abs(estimator.estimate().state(YAW_RATE) - before), 0.05);
 }
 
 TEST(EkfEstimator, TracksCircleWithBiasedGyro)
@@ -164,8 +178,21 @@ TEST(EkfEstimator, TracksCircleWithBiasedGyro)
 
     EXPECT_LT(positionError(e, truth), 0.5);
     EXPECT_LT(yawError(e, truth), 0.1);
-    EXPECT_NEAR(e.state(GYRO_BIAS), scenario.gyro_bias, 0.02);
     EXPECT_NEAR(e.state(SPEED), scenario.speed, 0.1);
+    EXPECT_NEAR(e.state(YAW_RATE), scenario.yaw_rate, 0.1);
+}
+
+TEST(EkfEstimator, ToleratesNoisyAndBiasedGyro)
+{
+    EkfEstimator estimator(NoiseDensities{}, InitialUncertainty{});
+    Scenario scenario;
+    scenario.gyro_bias = 0.3;
+    scenario.gyro_std = 0.3;
+    const Truth truth = runScenario(estimator, scenario, 11);
+    const Estimate e = estimator.estimate();
+
+    EXPECT_LT(positionError(e, truth), 0.8);
+    EXPECT_LT(yawError(e, truth), 0.2);
 }
 
 TEST(ParticleEstimator, TracksCircleWithBiasedGyro)
@@ -177,8 +204,8 @@ TEST(ParticleEstimator, TracksCircleWithBiasedGyro)
 
     EXPECT_LT(positionError(e, truth), 1.0);
     EXPECT_LT(yawError(e, truth), 0.2);
-    EXPECT_NEAR(e.state(GYRO_BIAS), scenario.gyro_bias, 0.03);
     EXPECT_NEAR(e.state(SPEED), scenario.speed, 0.15);
+    EXPECT_NEAR(e.state(YAW_RATE), scenario.yaw_rate, 0.15);
 }
 
 TEST(ParticleFilter, ResamplingRestoresUniformWeights)

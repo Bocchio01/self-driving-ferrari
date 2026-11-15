@@ -4,28 +4,27 @@
 
 namespace ferrari_localization
 {
-    StateVector propagateMotion(const StateVector &x, double gyro_z, double dt, StateMatrix *jacobian)
+    StateVector propagateMotion(const StateVector &x, double dt, StateMatrix *jacobian)
     {
-        const double yaw_rate = gyro_z - x(GYRO_BIAS);
-        const double yaw_mid = x(YAW) + 0.5 * yaw_rate * dt;
+        const double yaw_mid = x(YAW) + 0.5 * x(YAW_RATE) * dt;
         const double sin_mid = std::sin(yaw_mid);
         const double cos_mid = std::cos(yaw_mid);
 
         StateVector next = x;
         next(X) += x(SPEED) * cos_mid * dt;
         next(Y) += x(SPEED) * sin_mid * dt;
-        next(YAW) = std::remainder(x(YAW) + yaw_rate * dt, 2.0 * M_PI);
+        next(YAW) = std::remainder(x(YAW) + x(YAW_RATE) * dt, 2.0 * M_PI);
 
         if (jacobian)
         {
             *jacobian = StateMatrix::Identity();
             (*jacobian)(X, YAW) = -x(SPEED) * sin_mid * dt;
             (*jacobian)(X, SPEED) = cos_mid * dt;
-            (*jacobian)(X, GYRO_BIAS) = 0.5 * x(SPEED) * sin_mid * dt * dt;
+            (*jacobian)(X, YAW_RATE) = -0.5 * x(SPEED) * sin_mid * dt * dt;
             (*jacobian)(Y, YAW) = x(SPEED) * cos_mid * dt;
             (*jacobian)(Y, SPEED) = sin_mid * dt;
-            (*jacobian)(Y, GYRO_BIAS) = -0.5 * x(SPEED) * cos_mid * dt * dt;
-            (*jacobian)(YAW, GYRO_BIAS) = -dt;
+            (*jacobian)(Y, YAW_RATE) = 0.5 * x(SPEED) * cos_mid * dt * dt;
+            (*jacobian)(YAW, YAW_RATE) = dt;
         }
         return next;
     }
@@ -35,7 +34,7 @@ namespace ferrari_localization
         StateVector initialStd(const InitialUncertainty &initial)
         {
             StateVector s;
-            s << initial.pose, initial.pose, initial.pose, initial.speed, initial.gyro_bias;
+            s << initial.pose, initial.pose, initial.pose, initial.speed, initial.yaw_rate, initial.gyro_bias;
             return s;
         }
     }
@@ -50,52 +49,56 @@ namespace ferrari_localization
     {
         const StateVector s = initialStd(initial_);
         filter_.reset(Eigen::VectorXd::Zero(STATE_DIM), (s.array().square()).matrix().asDiagonal());
-        last_gyro_ = 0.0;
     }
 
-    void EkfEstimator::predict(double gyro_z, double dt)
+    void EkfEstimator::predict(double dt)
     {
-        last_gyro_ = gyro_z;
-
         StateMatrix F;
-        const StateVector x_next = propagateMotion(filter_.state(), gyro_z, dt, &F);
+        const StateVector x_next = propagateMotion(filter_.state(), dt, &F);
 
         StateVector q;
-        q << noise_.position * noise_.position, noise_.position * noise_.position, noise_.heading * noise_.heading,
-            noise_.speed * noise_.speed, noise_.gyro_bias * noise_.gyro_bias;
+        q << noise_.position * noise_.position, noise_.position * noise_.position, 0.0,
+            noise_.speed * noise_.speed, noise_.yaw_rate * noise_.yaw_rate, noise_.gyro_bias * noise_.gyro_bias;
         const StateMatrix Q = (q * dt).asDiagonal();
 
         filter_.predict(x_next, F, Q);
     }
 
-    void EkfEstimator::updateWheelSpeed(double speed, double variance)
+    void EkfEstimator::scalarUpdate(double measurement, double predicted, const Eigen::RowVectorXd &H, double variance)
     {
-        Eigen::MatrixXd H = Eigen::MatrixXd::Zero(1, STATE_DIM);
-        H(0, SPEED) = 1.0;
         Eigen::VectorXd z(1), h(1);
-        z << speed;
-        h << filter_.state()(SPEED);
+        z << measurement;
+        h << predicted;
         filter_.update(z, h, H, Eigen::MatrixXd::Constant(1, 1, variance));
     }
 
-    void EkfEstimator::updateYawRate(double yaw_rate, double variance)
+    void EkfEstimator::updateWheelSpeed(double speed, double variance)
     {
-        Eigen::MatrixXd H = Eigen::MatrixXd::Zero(1, STATE_DIM);
-        H(0, GYRO_BIAS) = -1.0;
-        Eigen::VectorXd z(1), h(1);
-        z << yaw_rate;
-        h << last_gyro_ - filter_.state()(GYRO_BIAS);
-        filter_.update(z, h, H, Eigen::MatrixXd::Constant(1, 1, variance));
+        Eigen::RowVectorXd H = Eigen::RowVectorXd::Zero(STATE_DIM);
+        H(SPEED) = 1.0;
+        scalarUpdate(speed, filter_.state()(SPEED), H, variance);
+    }
+
+    void EkfEstimator::updateKinematicYawRate(double yaw_rate, double variance)
+    {
+        Eigen::RowVectorXd H = Eigen::RowVectorXd::Zero(STATE_DIM);
+        H(YAW_RATE) = 1.0;
+        scalarUpdate(yaw_rate, filter_.state()(YAW_RATE), H, variance);
+    }
+
+    void EkfEstimator::updateGyro(double gyro_z, double variance)
+    {
+        Eigen::RowVectorXd H = Eigen::RowVectorXd::Zero(STATE_DIM);
+        H(YAW_RATE) = 1.0;
+        H(GYRO_BIAS) = 1.0;
+        scalarUpdate(gyro_z, filter_.state()(YAW_RATE) + filter_.state()(GYRO_BIAS), H, variance);
     }
 
     void EkfEstimator::updateGyroBias(double gyro_z, double variance)
     {
-        Eigen::MatrixXd H = Eigen::MatrixXd::Zero(1, STATE_DIM);
-        H(0, GYRO_BIAS) = 1.0;
-        Eigen::VectorXd z(1), h(1);
-        z << gyro_z;
-        h << filter_.state()(GYRO_BIAS);
-        filter_.update(z, h, H, Eigen::MatrixXd::Constant(1, 1, variance));
+        Eigen::RowVectorXd H = Eigen::RowVectorXd::Zero(STATE_DIM);
+        H(GYRO_BIAS) = 1.0;
+        scalarUpdate(gyro_z, filter_.state()(GYRO_BIAS), H, variance);
     }
 
     Estimate EkfEstimator::estimate() const
@@ -103,7 +106,6 @@ namespace ferrari_localization
         Estimate e;
         e.state = filter_.state();
         e.covariance = filter_.covariance();
-        e.yaw_rate = last_gyro_ - e.state(GYRO_BIAS);
         return e;
     }
 
@@ -125,23 +127,21 @@ namespace ferrari_localization
                 particle(i) = s(i) * normal(rng);
             }
             return particle; });
-        last_gyro_ = 0.0;
     }
 
-    void ParticleEstimator::predict(double gyro_z, double dt)
+    void ParticleEstimator::predict(double dt)
     {
-        last_gyro_ = gyro_z;
         const double sqrt_dt = std::sqrt(dt);
         const NoiseDensities noise = noise_;
 
-        filter_.predict([gyro_z, dt, sqrt_dt, noise](Eigen::VectorXd &particle, std::mt19937 &rng)
+        filter_.predict([dt, sqrt_dt, noise](Eigen::VectorXd &particle, std::mt19937 &rng)
                         {
             std::normal_distribution<double> normal(0.0, 1.0);
-            StateVector next = propagateMotion(particle, gyro_z, dt);
+            StateVector next = propagateMotion(particle, dt);
             next(X) += noise.position * sqrt_dt * normal(rng);
             next(Y) += noise.position * sqrt_dt * normal(rng);
-            next(YAW) = std::remainder(next(YAW) + noise.heading * sqrt_dt * normal(rng), 2.0 * M_PI);
             next(SPEED) += noise.speed * sqrt_dt * normal(rng);
+            next(YAW_RATE) += noise.yaw_rate * sqrt_dt * normal(rng);
             next(GYRO_BIAS) += noise.gyro_bias * sqrt_dt * normal(rng);
             particle = next; });
     }
@@ -188,11 +188,16 @@ namespace ferrari_localization
                        { return p(SPEED); });
     }
 
-    void ParticleEstimator::updateYawRate(double yaw_rate, double variance)
+    void ParticleEstimator::updateKinematicYawRate(double yaw_rate, double variance)
     {
-        const double gyro = last_gyro_;
-        ensembleUpdate(yaw_rate, variance, [gyro](const Eigen::VectorXd &p)
-                       { return gyro - p(GYRO_BIAS); });
+        ensembleUpdate(yaw_rate, variance, [](const Eigen::VectorXd &p)
+                       { return p(YAW_RATE); });
+    }
+
+    void ParticleEstimator::updateGyro(double gyro_z, double variance)
+    {
+        ensembleUpdate(gyro_z, variance, [](const Eigen::VectorXd &p)
+                       { return p(YAW_RATE) + p(GYRO_BIAS); });
     }
 
     void ParticleEstimator::updateGyroBias(double gyro_z, double variance)
@@ -209,7 +214,6 @@ namespace ferrari_localization
         Estimate e;
         e.state = mean;
         e.covariance = filter_.covariance(mean, angles);
-        e.yaw_rate = last_gyro_ - e.state(GYRO_BIAS);
         return e;
     }
 }
