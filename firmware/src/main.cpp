@@ -16,6 +16,7 @@
 #include "network/subscribers/ackermann_cmd.hpp"
 #include "network/services/toggle_arm_actuators.hpp"
 #include "network/publishers/odom.hpp"
+#include "network/publishers/imu.hpp"
 
 #define CRASH_THRESHOLD powf(2.5, 2) // (2.5G)^2 Threshold for triggering a crash event
 
@@ -35,7 +36,8 @@ sensors::Encoder encoder(&Wire2, 26);
 Network &network = Network::getInstance();
 SubscriberAckermannCmd sub_control_cmd;
 ServiceToggleArmActuators srv_toggle_arm_actuators;
-PublisherOdom publisher_odometry(10.0f);
+PublisherOdom publisher_odometry(30.0f);
+PublisherImu publisher_imu(imu, 50.0f);
 
 // Hardware Timer
 IntervalTimer control_loop_timer;
@@ -72,6 +74,7 @@ void setup()
 
     // Network setup
     network.addPublisher(publisher_odometry);
+    network.addPublisher(publisher_imu);
     network.addSubscriber(sub_control_cmd);
     network.addService(srv_toggle_arm_actuators);
     network.bindVehicle(ferrari);
@@ -92,6 +95,7 @@ void loop()
     if (network.isConnected())
     {
         publisher_odometry.publish();
+        publisher_imu.publish();
     }
 }
 

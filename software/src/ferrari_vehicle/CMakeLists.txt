@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -47,6 +48,7 @@ target_link_libraries(odom_proxy_node
     PRIVATE
     rclcpp::rclcpp
     nav_msgs::nav_msgs
+    sensor_msgs::sensor_msgs
     ${cpp_typesupport_target}
 )
 
@@ -60,6 +62,7 @@ target_link_libraries(ferrari_twin_node
     vehicle_models
     rclcpp::rclcpp
     nav_msgs::nav_msgs
+    sensor_msgs::sensor_msgs
     ackermann_msgs::ackermann_msgs
     geometry_msgs::geometry_msgs
     tf2::tf2

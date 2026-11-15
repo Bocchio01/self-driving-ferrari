@@ -1,5 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <tf2/LinearMath/Quaternion.hpp>
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 
@@ -27,6 +28,7 @@ public:
 
         cmd_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("ackermann_cmd", 10, std::bind(&FerrariTwinNode::cmd_callback, this, _1));
         odom_pub_ = this->create_publisher<ferrari_vehicle::msg::OdomLite>("odom_lite", rclcpp::SensorDataQoS());
+        imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("imu_raw", rclcpp::SensorDataQoS());
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(dt * 1000)),
@@ -67,6 +69,19 @@ private:
         odom_msg.twist.linear.x = u_.speed;
         odom_msg.twist.angular.z = (u_.speed / model_.params().wheelbase) * std::tan(u_.steering_angle);
         odom_pub_->publish(odom_msg);
+
+        sensor_msgs::msg::Imu imu_msg;
+        imu_msg.header.stamp = odom_msg.header.stamp;
+        imu_msg.header.frame_id = "imu_link";
+        imu_msg.orientation_covariance[0] = -1.0;
+        imu_msg.angular_velocity.z = odom_msg.twist.angular.z;
+        imu_msg.linear_acceleration.z = 9.80665;
+        for (size_t i = 0; i < 3; ++i)
+        {
+            imu_msg.angular_velocity_covariance[i * 4] = 1.0e-4;
+            imu_msg.linear_acceleration_covariance[i * 4] = 2.5e-3;
+        }
+        imu_pub_->publish(imu_msg);
     }
 
     Model model_;
@@ -75,6 +90,7 @@ private:
 
     rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr cmd_sub_;
     rclcpp::Publisher<ferrari_vehicle::msg::OdomLite>::SharedPtr odom_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     static constexpr double dt = 0.02;
 };
