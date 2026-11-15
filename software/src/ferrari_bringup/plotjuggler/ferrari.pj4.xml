@@ -1,0 +1,204 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root binding="source" format="PlotJuggler" pj4_version="4">
+  <tabbed_widget id="" name="main" parent="main_window">
+    <Tab containers="1" id="476ff349-4b0d-4543-9221-75d55557423e" tab_name="Overview">
+      <Container>
+        <DockSplitter count="1" orientation="-" sizes="1.00000000">
+          <DockSplitter count="2" orientation="|" sizes="0.50000000;0.50000000">
+            <DockArea id="2d13b753-f78b-42d7-b577-823c7e5190af" name="...">
+              <placeholder/>
+            </DockArea>
+            <DockSplitter count="3" orientation="-" sizes="0.34000000;0.33000000;0.33000000">
+              <DockArea id="9b6a6f7d-574d-4b1b-9753-6e573122d9e1" name="...">
+                <plot id="91adc1c6-1257-4d38-9679-d395e8cd7f88" line_width="1.0" mode="TimeSeries" style="Lines" title="Speed [m/s]" tracker_enabled="true">
+                  <range bottom="-0.100000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="1.000000" x_basis="absolute"/>
+                  <curve color="#1f77b4" dataset_source="[stream] ROS 2 Topic Subscriber" field="twist/twist/linear/x" markers_visible="false" topic="/localization/odom" visible="true"/>
+                  <curve color="#ff7f0e" dataset_source="[stream] ROS 2 Topic Subscriber" field="twist/twist/linear/x" markers_visible="false" topic="/vehicle/odom" visible="true"/>
+                  <curve color="#2ca02c" dataset_source="[stream] ROS 2 Topic Subscriber" field="target_speed" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                  <curve color="#d62728" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/speed" markers_visible="false" topic="/vehicle/ackermann_cmd" visible="true"/>
+                </plot>
+              </DockArea>
+              <DockArea id="f69d9769-6599-4aa4-b2fc-cea51e873b95" name="...">
+                <plot id="fa534415-bc7c-43f9-b42b-0d9a44498c29" line_width="1.0" mode="TimeSeries" style="Lines" title="Steering command [rad] and yaw rate [rad/s]" tracker_enabled="true">
+                  <range bottom="-0.600000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="0.600000" x_basis="absolute"/>
+                  <curve color="#d62728" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/steering_angle" markers_visible="false" topic="/vehicle/ackermann_cmd" visible="true"/>
+                  <curve color="#1f77b4" dataset_source="[stream] ROS 2 Topic Subscriber" field="twist/twist/angular/z" markers_visible="false" topic="/localization/odom" visible="true"/>
+                </plot>
+              </DockArea>
+              <DockArea id="b3b4e5d1-76f2-4fcd-84cf-f12a637ab2e8" name="...">
+                <plot id="31ed3e04-4b30-4537-b3f1-209feaf5c690" line_width="1.0" mode="TimeSeries" style="Lines" title="Tracking error: lateral [m], heading [rad]" tracker_enabled="true">
+                  <range bottom="-0.500000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="0.500000" x_basis="absolute"/>
+                  <curve color="#e377c2" dataset_source="[stream] ROS 2 Topic Subscriber" field="lateral_error" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                  <curve color="#9467bd" dataset_source="[stream] ROS 2 Topic Subscriber" field="heading_error" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                </plot>
+              </DockArea>
+            </DockSplitter>
+          </DockSplitter>
+        </DockSplitter>
+      </Container>
+    </Tab>
+    <Tab containers="1" id="e563d243-6726-4e12-b4bb-088c791ac0bf" tab_name="Localization">
+      <Container>
+        <DockSplitter count="1" orientation="-" sizes="1.00000000">
+          <DockSplitter count="2" orientation="|" sizes="0.50000000;0.50000000">
+            <DockSplitter count="2" orientation="-" sizes="0.50000000;0.50000000">
+                <DockArea id="c3ba658f-5e77-40e6-9b85-3ed73b793126" name="...">
+                  <plot id="df45de8f-c26e-4765-9abb-e711a76d3931" line_width="1.0" mode="TimeSeries" style="Lines" title="Gyro bias +/- std [rad/s]" tracker_enabled="true">
+                    <range bottom="-0.200000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="0.200000" x_basis="absolute"/>
+                    <curve color="#1f77b4" dataset_source="[stream] ROS 2 Topic Subscriber" field="gyro_bias" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                    <curve color="#7f7f7f" dataset_source="[stream] ROS 2 Topic Subscriber" field="value" markers_visible="false" topic="gyro_bias_plus_std" visible="true"/>
+                    <curve color="#7f7f7f" dataset_source="[stream] ROS 2 Topic Subscriber" field="value" markers_visible="false" topic="gyro_bias_minus_std" visible="true"/>
+                  </plot>
+                </DockArea>
+                <DockArea id="9a52a30a-2e9b-4298-a3a9-feac01ae867b" name="...">
+                  <plot id="9b5662e0-4023-417a-a268-ab277b89ae78" line_width="1.0" mode="TimeSeries" style="Lines" title="Yaw rate: estimate vs kinematic vs gyro [rad/s]" tracker_enabled="true">
+                    <range bottom="-1.500000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="1.500000" x_basis="absolute"/>
+                    <curve color="#1f77b4" dataset_source="[stream] ROS 2 Topic Subscriber" field="yaw_rate" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                    <curve color="#2ca02c" dataset_source="[stream] ROS 2 Topic Subscriber" field="measured_kinematic_yaw_rate" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                    <curve color="#d62728" dataset_source="[stream] ROS 2 Topic Subscriber" field="measured_gyro_z" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                  </plot>
+                </DockArea>
+            </DockSplitter>
+            <DockSplitter count="2" orientation="-" sizes="0.50000000;0.50000000">
+                <DockArea id="e9f7ad8d-d5ea-4ea0-9e79-bcacc8224e33" name="...">
+                  <plot id="2cd3d5d6-d7ae-454b-894f-b206e4702eb3" line_width="1.0" mode="TimeSeries" style="Lines" title="Standard deviations: x, y [m], yaw [rad]" tracker_enabled="true">
+                    <range bottom="0.000000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="1.000000" x_basis="absolute"/>
+                    <curve color="#ff7f0e" dataset_source="[stream] ROS 2 Topic Subscriber" field="x_std" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                    <curve color="#e377c2" dataset_source="[stream] ROS 2 Topic Subscriber" field="y_std" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                    <curve color="#9467bd" dataset_source="[stream] ROS 2 Topic Subscriber" field="yaw_std" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                  </plot>
+                </DockArea>
+                <DockArea id="977f3999-a072-43be-a8e9-ff93cbc9d36f" name="...">
+                  <plot id="5373ce44-608c-4238-a70e-4018a2a8e906" line_width="1.0" mode="TimeSeries" style="Lines" title="Speed: estimate vs wheel [m/s]" tracker_enabled="true">
+                    <range bottom="-0.100000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="1.000000" x_basis="absolute"/>
+                    <curve color="#1f77b4" dataset_source="[stream] ROS 2 Topic Subscriber" field="speed" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                    <curve color="#ff7f0e" dataset_source="[stream] ROS 2 Topic Subscriber" field="measured_wheel_speed" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                  </plot>
+                </DockArea>
+            </DockSplitter>
+          </DockSplitter>
+        </DockSplitter>
+      </Container>
+    </Tab>
+    <Tab containers="1" id="6daf2740-cd95-4d7b-a444-349fb85083ac" tab_name="IMU">
+      <Container>
+        <DockSplitter count="2" orientation="-" sizes="0.45000000;0.55000000">
+              <DockArea id="8d01bb45-9c42-422e-b5d8-8abaa12a8a01" name="...">
+                <plot id="24d73800-8bde-4a76-91f3-d4332c2e5ece" line_width="1.0" mode="TimeSeries" style="Lines" title="Gyro z vs kinematic yaw rate [rad/s]" tracker_enabled="true">
+                  <range bottom="-1.500000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="1.500000" x_basis="absolute"/>
+                  <curve color="#d62728" dataset_source="[stream] ROS 2 Topic Subscriber" field="angular_velocity/z" markers_visible="false" topic="/vehicle/imu_raw" visible="true"/>
+                  <curve color="#2ca02c" dataset_source="[stream] ROS 2 Topic Subscriber" field="measured_kinematic_yaw_rate" markers_visible="false" topic="/localization/filter_state" visible="true"/>
+                </plot>
+              </DockArea>
+            <DockSplitter count="2" orientation="|" sizes="0.50000000;0.50000000">
+                <DockArea id="52e03ac0-b770-434c-a4d9-7f771f604049" name="...">
+                  <plot id="b89dd07f-5c35-4f13-a7ca-41d7680a0879" line_width="1.0" mode="TimeSeries" style="Lines" title="Acceleration x, y [m/s^2]" tracker_enabled="true">
+                    <range bottom="-3.000000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="3.000000" x_basis="absolute"/>
+                    <curve color="#1f77b4" dataset_source="[stream] ROS 2 Topic Subscriber" field="linear_acceleration/x" markers_visible="false" topic="/vehicle/imu_raw" visible="true"/>
+                    <curve color="#ff7f0e" dataset_source="[stream] ROS 2 Topic Subscriber" field="linear_acceleration/y" markers_visible="false" topic="/vehicle/imu_raw" visible="true"/>
+                  </plot>
+                </DockArea>
+                <DockArea id="0576de4f-c476-4ee4-bd7a-9c91aaca04a9" name="...">
+                  <plot id="40f84a25-2eff-4a87-ab13-7d663d596ec5" line_width="1.0" mode="TimeSeries" style="Lines" title="Acceleration z [m/s^2]" tracker_enabled="true">
+                    <range bottom="9.000000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="10.600000" x_basis="absolute"/>
+                    <curve color="#17becf" dataset_source="[stream] ROS 2 Topic Subscriber" field="linear_acceleration/z" markers_visible="false" topic="/vehicle/imu_raw" visible="true"/>
+                  </plot>
+                </DockArea>
+            </DockSplitter>
+        </DockSplitter>
+      </Container>
+    </Tab>
+    <Tab containers="1" id="f54d4f2a-a228-46bd-a568-88b2e83d6701" tab_name="Control">
+      <Container>
+        <DockSplitter count="2" orientation="-" sizes="0.55000000;0.45000000">
+          <DockSplitter count="2" orientation="|" sizes="0.50000000;0.50000000">
+                <DockArea id="a960abc4-2579-4482-ac24-52b91bb6c066" name="...">
+                  <plot id="26c93f41-0d54-463a-a1a0-31c5f7c08ceb" line_width="1.0" mode="TimeSeries" style="Lines" title="Speed command by controller vs output [m/s]" tracker_enabled="true">
+                    <range bottom="-0.200000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="1.000000" x_basis="absolute"/>
+                    <curve color="#d62728" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/speed" markers_visible="false" topic="/vehicle/ackermann_cmd" visible="true"/>
+                    <curve color="#2ca02c" dataset_source="[stream] ROS 2 Topic Subscriber" field="target_speed" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                    <curve color="#1f77b4" dataset_source="[stream] ROS 2 Topic Subscriber" field="speed" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                    <curve color="#7f7f7f" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/speed" markers_visible="false" topic="/control/joypad_cmd" visible="true"/>
+                    <curve color="#9467bd" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/speed" markers_visible="false" topic="/control/mpc_cmd" visible="true"/>
+                    <curve color="#17becf" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/speed" markers_visible="false" topic="/control/longitudinal_pid_cmd" visible="true"/>
+                  </plot>
+                </DockArea>
+                <DockArea id="44c33e15-4c41-4e62-826d-667e065e8296" name="...">
+                  <plot id="6be7648e-a475-4062-b843-8ab3c38fd20d" line_width="1.0" mode="TimeSeries" style="Lines" title="Steering command by controller vs output [rad]" tracker_enabled="true">
+                    <range bottom="-0.450000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="0.450000" x_basis="absolute"/>
+                    <curve color="#d62728" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/steering_angle" markers_visible="false" topic="/vehicle/ackermann_cmd" visible="true"/>
+                    <curve color="#7f7f7f" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/steering_angle" markers_visible="false" topic="/control/joypad_cmd" visible="true"/>
+                    <curve color="#9467bd" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/steering_angle" markers_visible="false" topic="/control/mpc_cmd" visible="true"/>
+                    <curve color="#8c564b" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/steering_angle" markers_visible="false" topic="/control/lateral_mpc_cmd" visible="true"/>
+                    <curve color="#e377c2" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/steering_angle" markers_visible="false" topic="/control/lateral_stanley_cmd" visible="true"/>
+                    <curve color="#bcbd22" dataset_source="[stream] ROS 2 Topic Subscriber" field="drive/steering_angle" markers_visible="false" topic="/control/lateral_pure_pursuit_cmd" visible="true"/>
+                  </plot>
+                </DockArea>
+          </DockSplitter>
+          <DockSplitter count="2" orientation="|" sizes="0.50000000;0.50000000">
+                <DockArea id="27d1cf38-34fd-4301-aaa8-4aeaf3030cac" name="...">
+                  <plot id="21878299-ecb1-47bf-87bf-1597737c93ae" line_width="1.0" mode="TimeSeries" style="Lines" title="Lateral [m] and heading [rad] error" tracker_enabled="true">
+                    <range bottom="-0.500000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="0.500000" x_basis="absolute"/>
+                    <curve color="#e377c2" dataset_source="[stream] ROS 2 Topic Subscriber" field="lateral_error" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                    <curve color="#9467bd" dataset_source="[stream] ROS 2 Topic Subscriber" field="heading_error" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                  </plot>
+                </DockArea>
+                <DockArea id="de104c15-247a-4b59-9d8f-5cc17c67508e" name="...">
+                  <plot id="0503d086-4957-4a70-a9fe-382e297aacb6" line_width="1.0" mode="TimeSeries" style="Lines" title="Longitudinal error [m]" tracker_enabled="true">
+                    <range bottom="-0.500000" left="1794754859.373104" left_ns="1794754859373103616" right="1794754889.372298" right_ns="1794754889372298496" top="0.500000" x_basis="absolute"/>
+                    <curve color="#ff7f0e" dataset_source="[stream] ROS 2 Topic Subscriber" field="longitudinal_error" markers_visible="false" topic="/control/tracking_error" visible="true"/>
+                  </plot>
+                </DockArea>
+          </DockSplitter>
+        </DockSplitter>
+      </Container>
+    </Tab>
+    <currentTabIndex index="0"/>
+  </tabbed_widget>
+  <data_processors>
+    <transform api_version="1" backend="luau" history_exempt="1" id="gyro_bias_minus_std" owner_plugin="toolbox-assistant-agent">
+      <input column="9" dataset_source="[stream] ROS 2 Topic Subscriber" field="gyro_bias" name="/localization/filter_state/gyro_bias" topic="/localization/filter_state"/>
+      <input column="15" dataset_source="[stream] ROS 2 Topic Subscriber" field="gyro_bias_std" name="/localization/filter_state/gyro_bias_std" topic="/localization/filter_state"/>
+      <output name="gyro_bias_minus_std"/>
+      <params><![CDATA[{}]]></params>
+      <script><![CDATA[-- pj-script: luau
+local function _pj_make()
+
+  return function(time, value, v1)
+    return (value - v1)
+  end
+end
+local T = { id = "gyro_bias_minus_std", name = "gyro_bias_minus_std", output = "double" }
+T.__index = T
+function T.create(_) return setmetatable({ fn = _pj_make() }, T) end
+function T:calculate(t, v, ...) return self.fn(t, v, ...) end
+return T
+]]></script>
+    </transform>
+    <transform api_version="1" backend="luau" history_exempt="1" id="gyro_bias_plus_std" owner_plugin="toolbox-assistant-agent">
+      <input column="9" dataset_source="[stream] ROS 2 Topic Subscriber" field="gyro_bias" name="/localization/filter_state/gyro_bias" topic="/localization/filter_state"/>
+      <input column="15" dataset_source="[stream] ROS 2 Topic Subscriber" field="gyro_bias_std" name="/localization/filter_state/gyro_bias_std" topic="/localization/filter_state"/>
+      <output name="gyro_bias_plus_std"/>
+      <params><![CDATA[{}]]></params>
+      <script><![CDATA[-- pj-script: luau
+local function _pj_make()
+
+  return function(time, value, v1)
+    return (value + v1)
+  end
+end
+local T = { id = "gyro_bias_plus_std", name = "gyro_bias_plus_std", output = "double" }
+T.__index = T
+function T.create(_) return setmetatable({ fn = _pj_make() }, T) end
+function T:calculate(t, v, ...) return self.fn(t, v, ...) end
+return T
+]]></script>
+    </transform>
+  </data_processors>
+  <right_panel_state splitter_sizes="1920,0" style="0" width="1"/>
+  <left_panel_state sources_tab="stream" streaming_buffer="30" streaming_source="ROS 2 Topic Subscriber"/>
+  <curve_list_state custom_filter="" datasets_filter="" show_topics="true" show_values="false"/>
+  <chrome_state main_splitter_sizes="400,1486"/>
+  <source_timeline name_column_width="49" scroll_left_ns="1794754664495619956" scroll_top_px="0" snap="true" zoom="9.9999999999999995e-08"/>
+  <pinned_toolboxes/>
+</root>
