@@ -31,6 +31,7 @@ ONBOARD_PACKAGES = [
 
 GROUND_PACKAGES = [
     "ferrari_control",
+    "ferrari_dashboard",
     "ferrari_description",
     "ferrari_planning",
 ]

@@ -7,13 +7,13 @@ find_package(ament_cmake REQUIRED)
 # Installation
 # ==========================================
 install(PROGRAMS
-    src/bridge.js
+    scripts/dashboard_server.py
     DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY
-    public/
-    DESTINATION share/${PROJECT_NAME}/public
+    public
+    DESTINATION share/${PROJECT_NAME}
 )
 
 install(DIRECTORY
@@ -32,5 +32,3 @@ if(BUILD_TESTING)
 endif()
 
 ament_package()
-
-

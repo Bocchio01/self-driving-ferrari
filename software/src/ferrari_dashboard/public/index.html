@@ -1,87 +1,367 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ferrari Camera Stream</title>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-        }
-
-        .dashboard-card {
-            background: #1e1e1e;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        #status {
-            font-weight: bold;
-            margin-bottom: 1rem;
-        }
-
-        .connected {
-            color: #4ade80;
-        }
-
-        .disconnected {
-            color: #f87171;
-        }
-
-        #videoStream {
-            width: 640px;
-            height: 480px;
-            background-color: #000;
-            border: 2px solid #333;
-            border-radius: 4px;
-            display: block;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferrari Dashboard</title>
+<style>
+:root {
+    --bg: #0f1115;
+    --panel: #181b22;
+    --border: #272c36;
+    --text: #e6e8ec;
+    --muted: #8b93a1;
+    --accent: #e4002b;
+    --good: #3ddc84;
+    --warn: #ffb020;
+    --info: #4cc9f0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+header h1 { font-size: 16px; margin: 0; letter-spacing: 0.08em; text-transform: uppercase; }
+header h1 span { color: var(--accent); }
+.chip { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+.chip.ok { color: var(--good); border-color: var(--good); }
+.chip.bad { color: var(--accent); border-color: var(--accent); }
+main { display: grid; grid-template-columns: minmax(360px, 5fr) minmax(360px, 6fr); gap: 12px; padding: 12px; }
+.column { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.panel h2 { font-size: 11px; margin: 0 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+#camera-box { position: relative; background: #000; border-radius: 6px; aspect-ratio: 4 / 3; overflow: hidden; }
+#camera-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
+#camera-box .placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; }
+.instruments { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+canvas { width: 100%; display: block; }
+#gauge, #compass { aspect-ratio: 1.3 / 1; }
+#chart { aspect-ratio: 3.2 / 1; margin-top: 6px; }
+#map { aspect-ratio: 1 / 1; background: #0b0d11; border-radius: 6px; cursor: crosshair; touch-action: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { background: #242a36; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+button:hover { border-color: var(--info); }
+button.primary { background: var(--accent); border-color: var(--accent); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 12px; margin: 0; }
+.stats div { display: flex; flex-direction: column; }
+.stats dt { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.stats dd { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+</style>
 </head>
-
 <body>
-    <div class="dashboard-card">
-        <h2>Ferrari Dashboard</h2>
-        <div id="status" class="disconnected">System: Disconnected</div>
-        <img id="videoStream" alt="Waiting for video stream..." />
+<header>
+    <h1>Ferrari <span>Dashboard</span></h1>
+    <span class="chip" id="link">offline</span>
+    <span class="chip" id="mode">mode -</span>
+    <span class="chip" id="frame">frame -</span>
+    <span class="chip" id="message" style="margin-left:auto"></span>
+</header>
+<main>
+    <div class="column">
+        <section class="panel">
+            <h2>Cockpit camera</h2>
+            <div id="camera-box">
+                <img id="camera" alt="">
+                <div class="placeholder" id="camera-placeholder">no camera stream</div>
+            </div>
+        </section>
+        <section class="instruments">
+            <div class="panel">
+                <h2>Speed</h2>
+                <canvas id="gauge"></canvas>
+                <canvas id="chart"></canvas>
+            </div>
+            <div class="panel">
+                <h2>Heading</h2>
+                <canvas id="compass"></canvas>
+            </div>
+        </section>
+        <section class="panel">
+            <h2>Status</h2>
+            <dl class="stats">
+                <div><dt>Position x</dt><dd id="s-x">-</dd></div>
+                <div><dt>Position y</dt><dd id="s-y">-</dd></div>
+                <div><dt>Yaw</dt><dd id="s-yaw">-</dd></div>
+                <div><dt>Speed</dt><dd id="s-speed">-</dd></div>
+                <div><dt>Steering cmd</dt><dd id="s-steer">-</dd></div>
+                <div><dt>Yaw rate</dt><dd id="s-rate">-</dd></div>
+                <div><dt>Lateral error</dt><dd id="s-lat">-</dd></div>
+                <div><dt>Heading error</dt><dd id="s-head">-</dd></div>
+                <div><dt>Goal</dt><dd id="s-goal">-</dd></div>
+            </dl>
+        </section>
     </div>
+    <div class="column">
+        <section class="panel">
+            <h2>Map</h2>
+            <canvas id="map"></canvas>
+            <div class="hint">Click and drag on the map to set a goal: the drag direction is the arrival heading.</div>
+        </section>
+        <section class="panel">
+            <h2>Controls</h2>
+            <div class="controls">
+                <button class="primary" id="btn-switch">Next controller</button>
+                <button id="btn-arm">Toggle actuators</button>
+            </div>
+        </section>
+    </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const COLORS = { text: "#e6e8ec", muted: "#8b93a1", accent: "#e4002b", good: "#3ddc84", warn: "#ffb020", info: "#4cc9f0" };
+let state = null;
+let online = false;
+const history = [];
+const mapImage = new Image();
+let mapVersion = -1;
+let cameraActive = false;
+let drag = null;
+let view = null;
 
-    <script>
-        // Dynamically connect to whichever IP is serving the page
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const ws = new WebSocket(wsProtocol + window.location.host);
-        ws.binaryType = 'blob';
+function resize(canvas) {
+    const ratio = window.devicePixelRatio || 1;
+    const w = Math.round(canvas.clientWidth * ratio);
+    const h = Math.round(canvas.clientHeight * ratio);
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    return canvas.getContext("2d");
+}
 
-        const statusEl = document.getElementById('status');
-        const imageEl = document.getElementById('videoStream');
-        let currentObjectUrl = null;
+async function poll() {
+    try {
+        const response = await fetch("/api/state", { cache: "no-store" });
+        state = await response.json();
+        online = true;
+        if (state.map && state.map.version !== mapVersion) {
+            mapVersion = state.map.version;
+            mapImage.src = "/map.png?v=" + mapVersion;
+        }
+        if (state.camera && !cameraActive) {
+            cameraActive = true;
+            $("camera").src = "/camera.mjpg";
+        }
+        $("camera-placeholder").style.display = state.camera ? "none" : "flex";
+        history.push({ t: state.time, speed: state.speed, target: state.target_speed, cmd: state.cmd_speed });
+        while (history.length && state.time - history[0].t > 20) history.shift();
+    } catch (e) {
+        online = false;
+    }
+    updateText();
+    setTimeout(poll, 100);
+}
 
-        ws.onopen = () => {
-            statusEl.textContent = 'System: Connected (Live Stream)';
-            statusEl.className = 'connected';
-        };
+function fmt(v, digits, unit) { return v === null || v === undefined ? "-" : v.toFixed(digits) + (unit || ""); }
 
-        ws.onclose = () => {
-            statusEl.textContent = 'System: Disconnected';
-            statusEl.className = 'disconnected';
-        };
+function updateText() {
+    const link = $("link");
+    link.textContent = online ? "live" : "offline";
+    link.className = "chip " + (online ? "ok" : "bad");
+    if (!state) return;
+    $("mode").textContent = "mode " + (state.mode || "-");
+    $("frame").textContent = "frame " + (state.pose ? state.pose.frame : "-");
+    $("message").textContent = state.message || "";
+    const p = state.pose;
+    $("s-x").textContent = p ? fmt(p.x, 2, " m") : "-";
+    $("s-y").textContent = p ? fmt(p.y, 2, " m") : "-";
+    $("s-yaw").textContent = p ? fmt(p.yaw * 180 / Math.PI, 0, "°") : "-";
+    $("s-speed").textContent = fmt(state.speed, 2, " m/s");
+    $("s-steer").textContent = fmt(state.cmd_steer * 180 / Math.PI, 1, "°");
+    $("s-rate").textContent = fmt(state.yaw_rate, 2, " rad/s");
+    $("s-lat").textContent = fmt(state.lateral_error, 3, " m");
+    $("s-head").textContent = fmt(state.heading_error === null ? null : state.heading_error * 180 / Math.PI, 1, "°");
+    $("s-goal").textContent = state.goal ? `${state.goal.x.toFixed(1)}, ${state.goal.y.toFixed(1)}` : "-";
+}
 
-        ws.onmessage = (event) => {
-            if (currentObjectUrl) {
-                URL.revokeObjectURL(currentObjectUrl);
-            }
-            currentObjectUrl = URL.createObjectURL(event.data);
-            imageEl.src = currentObjectUrl;
-        };
-    </script>
+function drawGauge() {
+    const canvas = $("gauge");
+    const ctx = resize(canvas);
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h * 0.82, r = Math.min(w / 2, h) * 0.78;
+    const max = 1.0;
+    const start = Math.PI * 0.85, end = Math.PI * 2.15;
+    const angle = (v) => start + (end - start) * Math.max(0, Math.min(1, v / max));
+    ctx.lineWidth = r * 0.12;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#272c36";
+    ctx.beginPath(); ctx.arc(cx, cy, r, start, end); ctx.stroke();
+    if (state) {
+        ctx.strokeStyle = COLORS.accent;
+        ctx.beginPath(); ctx.arc(cx, cy, r, start, angle(Math.abs(state.speed))); ctx.stroke();
+        if (state.target_speed !== null) {
+            const a = angle(state.target_speed);
+            ctx.strokeStyle = COLORS.good;
+            ctx.lineWidth = r * 0.04;
+            ctx.beginPath(); ctx.arc(cx, cy, r * 1.14, a - 0.02, a + 0.02); ctx.stroke();
+        }
+    }
+    ctx.fillStyle = COLORS.text;
+    ctx.textAlign = "center";
+    ctx.font = `600 ${r * 0.42}px system-ui`;
+    ctx.fillText(state ? Math.abs(state.speed).toFixed(2) : "-", cx, cy - r * 0.15);
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = `${r * 0.16}px system-ui`;
+    ctx.fillText("m/s", cx, cy + r * 0.08);
+}
+
+function drawChart() {
+    const canvas = $("chart");
+    const ctx = resize(canvas);
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "#272c36";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+    if (history.length < 2) return;
+    const t1 = history[history.length - 1].t, max = 1.0;
+    const line = (key, color) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        for (const s of history) {
+            const v = s[key];
+            if (v === null || v === undefined) continue;
+            const x = w - ((t1 - s.t) / 20) * w;
+            const y = h - Math.max(0, Math.min(1, Math.abs(v) / max)) * (h - 6) - 3;
+            if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    };
+    line("cmd", COLORS.warn);
+    line("target", COLORS.good);
+    line("speed", COLORS.accent);
+}
+
+function drawCompass() {
+    const canvas = $("compass");
+    const ctx = resize(canvas);
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.38;
+    ctx.strokeStyle = "#272c36";
+    ctx.lineWidth = r * 0.06;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = COLORS.muted;
+    ctx.font = `600 ${r * 0.2}px system-ui`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    [["N", 0, -1], ["E", 1, 0], ["S", 0, 1], ["W", -1, 0]].forEach(([label, dx, dy]) => ctx.fillText(label, cx + dx * r * 1.28, cy + dy * r * 1.28));
+    if (state && state.pose) {
+        const yaw = state.pose.yaw;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-yaw + Math.PI / 2);
+        ctx.fillStyle = COLORS.accent;
+        ctx.beginPath(); ctx.moveTo(0, -r * 0.9); ctx.lineTo(r * 0.2, r * 0.25); ctx.lineTo(0, r * 0.1); ctx.lineTo(-r * 0.2, r * 0.25); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = COLORS.text;
+        ctx.font = `600 ${r * 0.28}px system-ui`;
+        ctx.fillText(((yaw * 180 / Math.PI + 360) % 360).toFixed(0) + "°", cx, cy + r * 0.62);
+    }
+}
+
+function computeView(canvas) {
+    const m = state && state.map;
+    if (!m) { view = null; return; }
+    const mw = m.width * m.resolution, mh = m.height * m.resolution;
+    const scale = Math.min(canvas.width / mw, canvas.height / mh) * 0.96;
+    view = {
+        scale,
+        left: (canvas.width - mw * scale) / 2,
+        top: (canvas.height - mh * scale) / 2,
+        x0: m.origin_x,
+        ytop: m.origin_y + mh,
+        mw, mh,
+    };
+}
+
+function toScreen(x, y) { return [view.left + (x - view.x0) * view.scale, view.top + (view.ytop - y) * view.scale]; }
+function toWorld(sx, sy) { return [view.x0 + (sx - view.left) / view.scale, view.ytop - (sy - view.top) / view.scale]; }
+
+function arrow(ctx, x, y, yaw, size, color) {
+    const [sx, sy] = toScreen(x, y);
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(-yaw);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(-size * 0.7, size * 0.6); ctx.lineTo(-size * 0.35, 0); ctx.lineTo(-size * 0.7, -size * 0.6); ctx.closePath(); ctx.fill();
+    ctx.restore();
+}
+
+function drawMap() {
+    const canvas = $("map");
+    const ctx = resize(canvas);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    computeView(canvas);
+    if (!view) {
+        ctx.fillStyle = COLORS.muted;
+        ctx.font = `${canvas.width * 0.03}px system-ui`;
+        ctx.textAlign = "center";
+        ctx.fillText("waiting for the map", canvas.width / 2, canvas.height / 2);
+        return;
+    }
+    ctx.imageSmoothingEnabled = false;
+    if (mapImage.complete && mapImage.naturalWidth) ctx.drawImage(mapImage, view.left, view.top, view.mw * view.scale, view.mh * view.scale);
+    const px = Math.max(2, canvas.width / 300);
+    ctx.fillStyle = COLORS.info;
+    for (const [x, y] of state.scan) { const [sx, sy] = toScreen(x, y); ctx.fillRect(sx - px / 2, sy - px / 2, px, px); }
+    if (state.path.length > 1) {
+        ctx.strokeStyle = COLORS.warn;
+        ctx.lineWidth = px;
+        ctx.beginPath();
+        state.path.forEach(([x, y], i) => { const [sx, sy] = toScreen(x, y); i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); });
+        ctx.stroke();
+    }
+    if (state.goal) arrow(ctx, state.goal.x, state.goal.y, state.goal.yaw, px * 7, COLORS.good);
+    if (state.pose && state.pose.frame === "map") arrow(ctx, state.pose.x, state.pose.y, state.pose.yaw, px * 6, COLORS.accent);
+    if (drag) {
+        const [sx, sy] = toScreen(drag.x, drag.y);
+        ctx.strokeStyle = COLORS.good;
+        ctx.lineWidth = px;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(drag.sx, drag.sy); ctx.stroke();
+    }
+}
+
+function eventPoint(event) {
+    const canvas = $("map");
+    const rect = canvas.getBoundingClientRect();
+    return [(event.clientX - rect.left) * canvas.width / rect.width, (event.clientY - rect.top) * canvas.height / rect.height];
+}
+
+$("map").addEventListener("pointerdown", (event) => {
+    if (!view) return;
+    const [sx, sy] = eventPoint(event);
+    const [x, y] = toWorld(sx, sy);
+    drag = { x, y, sx, sy };
+    $("map").setPointerCapture(event.pointerId);
+});
+$("map").addEventListener("pointermove", (event) => {
+    if (!drag) return;
+    [drag.sx, drag.sy] = eventPoint(event);
+});
+$("map").addEventListener("pointerup", async () => {
+    if (!drag) return;
+    const dx = drag.sx - toScreen(drag.x, drag.y)[0];
+    const dy = drag.sy - toScreen(drag.x, drag.y)[1];
+    const yaw = Math.hypot(dx, dy) > 8 ? Math.atan2(-dy, dx) : (state && state.pose ? state.pose.yaw : 0);
+    const goal = { x: drag.x, y: drag.y, yaw };
+    drag = null;
+    await fetch("/api/goal", { method: "POST", body: JSON.stringify(goal) });
+});
+
+$("btn-switch").addEventListener("click", () => fetch("/api/switch_controller", { method: "POST", body: "{}" }));
+$("btn-arm").addEventListener("click", () => fetch("/api/toggle_actuators", { method: "POST", body: "{}" }));
+
+function frame() {
+    drawGauge();
+    drawChart();
+    drawCompass();
+    drawMap();
+    requestAnimationFrame(frame);
+}
+
+poll();
+frame();
+</script>
 </body>
-
 </html>

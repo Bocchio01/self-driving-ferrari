@@ -14,6 +14,8 @@ ControllerMultiplexerNode::ControllerMultiplexerNode(const rclcpp::NodeOptions &
     switch_controller_srv_ = this->create_service<std_srvs::srv::Trigger>("switch_controller", std::bind(&ControllerMultiplexerNode::handleSwitchController, this, std::placeholders::_1, std::placeholders::_2));
 
     initializeModes();
+    mode_pub_ = this->create_publisher<std_msgs::msg::String>("mode", rclcpp::QoS(1).transient_local());
+    publishMode();
 
     const auto period = std::chrono::duration<double>(1.0 / std::max(1.0, control_rate_hz));
     control_timer_ = this->create_wall_timer(
@@ -24,6 +26,13 @@ ControllerMultiplexerNode::ControllerMultiplexerNode(const rclcpp::NodeOptions &
     // for lifecycle bookkeeping and keeps it cheap.
     reconcile_timer_ = this->create_wall_timer(500ms, std::bind(&ControllerMultiplexerNode::reconcileControllers, this));
     RCLCPP_INFO(this->get_logger(), "control_multiplexer_node started, target mode: %s", modes_[current_mode_idx_].name.c_str());
+}
+
+void ControllerMultiplexerNode::publishMode()
+{
+    std_msgs::msg::String msg;
+    msg.data = modes_[current_mode_idx_].name;
+    mode_pub_->publish(msg);
 }
 
 void ControllerMultiplexerNode::initializeModes()
@@ -202,6 +211,7 @@ void ControllerMultiplexerNode::handleSwitchController(
 
     current_mode_idx_ = (current_mode_idx_ + 1) % modes_.size();
     command_state_ = CommandState{}; // drop stale commands from the previous controller(s)
+    publishMode();
 
     response->success = true;
     response->message = "Requested mode " + modes_[current_mode_idx_].name +

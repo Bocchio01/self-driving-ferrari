@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <lifecycle_msgs/srv/change_state.hpp>
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
@@ -77,6 +78,8 @@ private:
 
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr cmd_pub_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr switch_controller_srv_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr mode_pub_;
+    void publishMode();
     rclcpp::TimerBase::SharedPtr control_timer_;
     rclcpp::TimerBase::SharedPtr reconcile_timer_;
 
