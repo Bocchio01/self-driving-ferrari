@@ -12,12 +12,19 @@ sys.path.insert(
 )
 from utils import include_package_launches  # noqa: E402
 
-SIM_ARGUMENTS = [("sim", "true"), ("filter", LaunchConfiguration("filter"))]
+SIM_ARGUMENTS = [
+    ("sim", "true"),
+    ("filter", LaunchConfiguration("filter")),
+    ("odom_drift", LaunchConfiguration("odom_drift")),
+    ("slam_mode", LaunchConfiguration("slam_mode")),
+    ("map_file", LaunchConfiguration("map_file")),
+]
 
 ONBOARD_PACKAGES = [
     "ferrari_control",
     "ferrari_description",
     "ferrari_localization",
+    "ferrari_mapping",
     "ferrari_vehicle",
 ]
 
@@ -32,6 +39,9 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("filter", default_value="ekf"),
+            DeclareLaunchArgument("odom_drift", default_value="false"),
+            DeclareLaunchArgument("slam_mode", default_value="mapping"),
+            DeclareLaunchArgument("map_file", default_value=""),
             *include_package_launches(
                 ONBOARD_PACKAGES, "onboard", extra_arguments=SIM_ARGUMENTS
             ),

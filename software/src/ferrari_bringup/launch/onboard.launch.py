@@ -19,7 +19,7 @@ PACKAGES = [
     # "ferrari_dashboard",
     "ferrari_description",
     "ferrari_localization",
-    # "ferrari_mapping",
+    "ferrari_mapping",
     # "ferrari_perception",
     # "ferrari_planning",
     "ferrari_sensing",
@@ -29,8 +29,19 @@ PACKAGES = [
 
 def generate_launch_description():
     launch_actions = include_package_launches(
-        PACKAGES, PLATFORM, extra_arguments=[("filter", LaunchConfiguration("filter"))]
+        PACKAGES,
+        PLATFORM,
+        extra_arguments=[
+            ("filter", LaunchConfiguration("filter")),
+            ("slam_mode", LaunchConfiguration("slam_mode")),
+            ("map_file", LaunchConfiguration("map_file")),
+        ],
     )
     return LaunchDescription(
-        [DeclareLaunchArgument("filter", default_value="ekf"), *launch_actions]
+        [
+            DeclareLaunchArgument("filter", default_value="ekf"),
+            DeclareLaunchArgument("slam_mode", default_value="mapping"),
+            DeclareLaunchArgument("map_file", default_value=""),
+            *launch_actions,
+        ]
     )
