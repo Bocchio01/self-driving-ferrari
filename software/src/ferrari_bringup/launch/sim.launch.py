@@ -18,6 +18,7 @@ SIM_ARGUMENTS = [
     ("odom_drift", LaunchConfiguration("odom_drift")),
     ("slam_mode", LaunchConfiguration("slam_mode")),
     ("map_file", LaunchConfiguration("map_file")),
+    ("global_planner", LaunchConfiguration("global_planner")),
 ]
 
 ONBOARD_PACKAGES = [
@@ -42,6 +43,7 @@ def generate_launch_description():
             DeclareLaunchArgument("odom_drift", default_value="false"),
             DeclareLaunchArgument("slam_mode", default_value="mapping"),
             DeclareLaunchArgument("map_file", default_value=""),
+            DeclareLaunchArgument("global_planner", default_value="mock"),
             *include_package_launches(
                 ONBOARD_PACKAGES, "onboard", extra_arguments=SIM_ARGUMENTS
             ),

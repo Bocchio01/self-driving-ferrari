@@ -32,11 +32,20 @@ public:
         frame_id_ = this->declare_parameter<std::string>("frame_id", "lidar_link");
         const double rate_hz = this->declare_parameter<double>("rate_hz", 10.0);
 
-        addRectangle((hall[0] + hall[1]) / 2.0, (hall[2] + hall[3]) / 2.0, hall[1] - hall[0], hall[3] - hall[2]);
-        for (size_t i = 0; i + 3 < boxes.size(); i += 4)
-        {
-            addRectangle(boxes[i], boxes[i + 1], boxes[i + 2], boxes[i + 3]);
-        }
+        hall_ = hall;
+        rebuildWorld(boxes);
+        parameter_callback_ = this->add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> &parameters)
+                                                                  {
+            rcl_interfaces::msg::SetParametersResult result;
+            result.successful = true;
+            for (const auto &parameter : parameters)
+            {
+                if (parameter.get_name() == "boxes")
+                {
+                    rebuildWorld(parameter.as_double_array());
+                }
+            }
+            return result; });
 
         scan_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS());
         truth_sub_ = this->create_subscription<ferrari_vehicle::msg::OdomLite>("ground_truth", 10, [this](const ferrari_vehicle::msg::OdomLite::SharedPtr msg)
@@ -51,6 +60,16 @@ public:
     }
 
 private:
+    void rebuildWorld(const std::vector<double> &boxes)
+    {
+        segments_.clear();
+        addRectangle((hall_[0] + hall_[1]) / 2.0, (hall_[2] + hall_[3]) / 2.0, hall_[1] - hall_[0], hall_[3] - hall_[2]);
+        for (size_t i = 0; i + 3 < boxes.size(); i += 4)
+        {
+            addRectangle(boxes[i], boxes[i + 1], boxes[i + 2], boxes[i + 3]);
+        }
+    }
+
     void addRectangle(double cx, double cy, double w, double h)
     {
         const double x0 = cx - w / 2.0, x1 = cx + w / 2.0, y0 = cy - h / 2.0, y1 = cy + h / 2.0;
@@ -120,6 +139,8 @@ private:
     }
 
     std::vector<Segment> segments_;
+    std::vector<double> hall_;
+    rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_;
     double lidar_x_ = 0.0, lidar_y_ = 0.0, lidar_yaw_ = 0.0;
     int bins_ = 450;
     double range_min_ = 0.02, range_max_ = 12.0, noise_std_ = 0.01;
