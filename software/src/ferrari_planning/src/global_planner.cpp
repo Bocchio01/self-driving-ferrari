@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -77,9 +78,13 @@ public:
         params_.step = this->declare_parameter<double>("step", params_.step);
         params_.goal_tolerance = this->declare_parameter<double>("goal_tolerance", params_.goal_tolerance);
         params_.use_goal_yaw = this->declare_parameter<bool>("use_goal_yaw", params_.use_goal_yaw);
+        params_.goal_yaw_tolerance = this->declare_parameter<double>("goal_yaw_tolerance", params_.goal_yaw_tolerance);
+        params_.steering_margin = this->declare_parameter<double>("steering_margin", params_.steering_margin);
         params_.cost_weight = this->declare_parameter<double>("cost_weight", params_.cost_weight);
         params_.max_expansions = this->declare_parameter<int>("max_expansions", params_.max_expansions);
-        const double period = this->declare_parameter<double>("replan_period_s", 1.0);
+        const double period = this->declare_parameter<double>("check_period_s", 0.5);
+        periodic_replan_s_ = this->declare_parameter<double>("periodic_replan_s", 10.0);
+        deviation_replan_m_ = this->declare_parameter<double>("deviation_replan_m", 0.6);
 
         tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
         tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
@@ -109,6 +114,7 @@ private:
         }
         goal_ = PlannerPose{in_map.pose.position.x, in_map.pose.position.y, yawOf(in_map.pose.orientation)};
         failures_ = 0;
+        path_.clear();
         RCLCPP_INFO(get_logger(), "New goal (%.2f, %.2f) in %s", goal_->x, goal_->y, map_frame_.c_str());
         plan();
     }
@@ -131,6 +137,37 @@ private:
         path_pub_->publish(path);
     }
 
+    bool replanNeeded(const PlannerPose &start)
+    {
+        if (path_.empty() || (this->now() - last_plan_time_).seconds() >= periodic_replan_s_)
+        {
+            return true;
+        }
+
+        double nearest = std::numeric_limits<double>::max();
+        for (const auto &p : path_)
+        {
+            nearest = std::min(nearest, std::hypot(p.x - start.x, p.y - start.y));
+        }
+        if (nearest > deviation_replan_m_)
+        {
+            return true;
+        }
+
+        for (const auto &p : path_)
+        {
+            const double c = std::cos(p.yaw), s = std::sin(p.yaw);
+            for (double offset : params_.footprint_offsets)
+            {
+                if (costmap_.cost(p.x + c * offset, p.y + s * offset) >= params_.lethal_threshold)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     void plan()
     {
         if (!goal_ || !costmap_.valid())
@@ -150,11 +187,17 @@ private:
             return;
         }
 
-        if (std::hypot(start.x - goal_->x, start.y - goal_->y) <= params_.goal_tolerance)
+        const bool yaw_reached = !params_.use_goal_yaw || std::abs(std::remainder(start.yaw - goal_->yaw, 2.0 * M_PI)) <= params_.goal_yaw_tolerance;
+        if (std::hypot(start.x - goal_->x, start.y - goal_->y) <= params_.goal_tolerance && yaw_reached)
         {
             RCLCPP_INFO(get_logger(), "Goal reached");
             goal_.reset();
-            publishPath({});
+            path_.clear();
+            return;
+        }
+
+        if (!replanNeeded(start))
+        {
             return;
         }
 
@@ -165,15 +208,18 @@ private:
         const PlanResult result = planHybridAStar(local, start, *goal_, params_);
         const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
 
+        last_plan_time_ = this->now();
         if (result.success)
         {
             failures_ = 0;
+            path_ = result.path;
             publishPath(result.path);
             RCLCPP_DEBUG(get_logger(), "Planned %zu poses in %.0f ms (%d expansions)", result.path.size(), ms, result.expansions);
         }
         else
         {
             ++failures_;
+            path_.clear();
             RCLCPP_WARN(get_logger(), "No path to the goal (%d expansions, %.0f ms)", result.expansions, ms);
             if (failures_ >= max_failures_)
             {
@@ -189,6 +235,10 @@ private:
     HybridAStarParams params_;
     CostGrid costmap_;
     std::optional<PlannerPose> goal_;
+    std::vector<PlannerPose> path_;
+    rclcpp::Time last_plan_time_{0, 0, RCL_ROS_TIME};
+    double periodic_replan_s_ = 10.0;
+    double deviation_replan_m_ = 0.6;
 
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
     std::unique_ptr<tf2_ros::TransformListener> tf_listener_;

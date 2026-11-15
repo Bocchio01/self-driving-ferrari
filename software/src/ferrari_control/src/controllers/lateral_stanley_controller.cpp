@@ -12,6 +12,8 @@ LateralStanleyControllerNode::LateralStanleyControllerNode(const rclcpp::NodeOpt
 {
     this->declare_parameter<double>("k_gain", 1.5); // Cross-track error gain
     this->declare_parameter<double>("k_soft", 1.0); // Softening constant to prevent division by zero
+    this->declare_parameter<double>("curvature_gain", 1.0);
+    this->declare_parameter<int>("curvature_horizon", 8);
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
@@ -25,6 +27,8 @@ LateralStanleyControllerNode::on_configure(const rclcpp_lifecycle::State &state)
 
     k_gain_ = this->get_parameter("k_gain").as_double();
     k_soft_ = this->get_parameter("k_soft").as_double();
+    curvature_gain_ = this->get_parameter("curvature_gain").as_double();
+    curvature_horizon_ = this->get_parameter("curvature_horizon").as_int();
 
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
@@ -44,12 +48,25 @@ void LateralStanleyControllerNode::computeControlCommand()
     front_axle_pose.position.y += wheelbase_ * std::sin(yaw);
 
     // 2. Compute the spatial horizon and Frenet errors relative to the FRONT axle
-    auto horizon = ferrari_control::trajectory_utils::getTrajectoryHorizonBySpace(front_axle_pose, local_trajectory_, 2);
+    auto horizon = ferrari_control::trajectory_utils::getTrajectoryHorizonBySpace(front_axle_pose, local_trajectory_, std::max(2, curvature_horizon_));
     auto frenet_err = ferrari_control::trajectory_utils::computeFrenetError(front_axle_pose, horizon);
 
     // 3. Stanley control law
     double cross_track_steering = std::atan2(k_gain_ * frenet_err.d, current_velocity + k_soft_);
-    double steering_angle = -frenet_err.mu - cross_track_steering;
+    double reference_curvature = 0.0;
+    if (horizon.points.size() >= 2)
+    {
+        const auto &first = horizon.points.front().pose;
+        const auto &last = horizon.points.back().pose;
+        const double span = std::hypot(last.position.x - first.position.x, last.position.y - first.position.y);
+        if (span > 1e-3)
+        {
+            reference_curvature = std::remainder(tf2::getYaw(last.orientation) - tf2::getYaw(first.orientation), 2.0 * M_PI) / span;
+        }
+    }
+    const double feedforward = curvature_gain_ * std::atan(wheelbase_ * reference_curvature);
+
+    double steering_angle = -frenet_err.mu - cross_track_steering + feedforward;
 
     steering_angle = std::clamp(steering_angle, -max_steering_angle_, max_steering_angle_);
 
@@ -76,6 +93,10 @@ rcl_interfaces::msg::SetParametersResult LateralStanleyControllerNode::onParamsC
         else if (param.get_name() == "k_soft")
         {
             k_soft_ = param.as_double();
+        }
+        else if (param.get_name() == "curvature_gain")
+        {
+            curvature_gain_ = param.as_double();
         }
     }
     return result;

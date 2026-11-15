@@ -28,6 +28,8 @@ namespace ferrari_planning
         std::vector<PlannerPose> path;
     };
 
+    int maxPathCost(const std::vector<PlannerPose> &path, const CostGrid &grid, const AvoidanceParams &params);
+
     size_t firstCollisionIndex(const std::vector<PlannerPose> &path, const CostGrid &grid, const AvoidanceParams &params);
 
     AvoidanceResult planAvoidance(const std::vector<PlannerPose> &base, const CostGrid &grid, const AvoidanceParams &params, double start_offset, double previous_offset);

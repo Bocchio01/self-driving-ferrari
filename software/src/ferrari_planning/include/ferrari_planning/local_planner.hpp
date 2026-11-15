@@ -44,6 +44,7 @@ private:
     std::string odom_frame_ = "odom";
     double costmap_timeout_s_ = 0.5;
     double stop_margin_m_ = 0.3;
+    int avoid_cost_threshold_ = 15;
     double previous_offset_ = 0.0;
     ferrari_planning::CostGrid costmap_;
     rclcpp::Time costmap_time_{0, 0, RCL_ROS_TIME};

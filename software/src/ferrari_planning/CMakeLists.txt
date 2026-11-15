@@ -47,7 +47,7 @@ target_link_libraries(global_planner_node
     tf2_geometry_msgs::tf2_geometry_msgs
 )
 
-add_library(planning_core src/hybrid_astar.cpp src/avoidance.cpp)
+add_library(planning_core src/hybrid_astar.cpp src/avoidance.cpp src/dubins.cpp)
 target_include_directories(planning_core PUBLIC include)
 
 # ==========================================

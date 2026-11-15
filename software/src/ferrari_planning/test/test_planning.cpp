@@ -3,7 +3,10 @@
 
 #include <gtest/gtest.h>
 
+#include <random>
+
 #include "ferrari_planning/avoidance.hpp"
+#include "ferrari_planning/dubins.hpp"
 #include "ferrari_planning/hybrid_astar.hpp"
 
 using namespace ferrari_planning;
@@ -212,4 +215,57 @@ TEST(Avoidance, FindsTheFirstCollidingPoseOnAPath)
     ASSERT_LT(index, base.size());
     EXPECT_NEAR(base[index].x, 2.4 - 0.12 - 0.30, 0.1);
     EXPECT_EQ(firstCollisionIndex(base, centeredGrid({}), AvoidanceParams()), base.size());
+}
+
+TEST(Dubins, ReachesRandomGoalPosesExactlyWithMinimalRadius)
+{
+    std::mt19937 rng(4);
+    std::uniform_real_distribution<double> position(-5.0, 5.0), angle(-M_PI, M_PI);
+    int found = 0;
+    for (int i = 0; i < 200; ++i)
+    {
+        const PlannerPose start{position(rng), position(rng), angle(rng)};
+        const PlannerPose goal{position(rng), position(rng), angle(rng)};
+        const auto path = shortestDubinsPath(start, goal, 0.6);
+        ASSERT_TRUE(path.has_value());
+        ++found;
+
+        const auto samples = sampleDubinsPath(*path, start, 0.02);
+        EXPECT_NEAR(samples.back().x, goal.x, 2e-3);
+        EXPECT_NEAR(samples.back().y, goal.y, 2e-3);
+        EXPECT_NEAR(std::remainder(samples.back().yaw - goal.yaw, 2.0 * M_PI), 0.0, 2e-3);
+        EXPECT_GE(path->length(), std::hypot(goal.x - start.x, goal.y - start.y) - 1e-6);
+        std::vector<PlannerPose> poses = {start};
+        poses.insert(poses.end(), samples.begin(), samples.end());
+        EXPECT_LT(maxCurvature(poses), 1.0 / 0.6 + 0.15);
+    }
+    EXPECT_EQ(found, 200);
+}
+
+TEST(Dubins, StraightGoalIsAStraightLine)
+{
+    const auto path = shortestDubinsPath({0.0, 0.0, 0.0}, {3.0, 0.0, 0.0}, 0.6);
+    ASSERT_TRUE(path.has_value());
+    EXPECT_NEAR(path->length(), 3.0, 1e-6);
+}
+
+TEST(HybridAStar, ArrivesWithTheRequestedHeading)
+{
+    const CostGrid grid = makeGrid(14.0, 12.0, {{6.0, 4.0, 7.0, 8.0}});
+    for (double goal_yaw : {M_PI / 2.0, -M_PI / 2.0, M_PI, 0.0})
+    {
+        const PlanResult result = planHybridAStar(grid, {2.0, 6.0, 0.0}, {10.0, 6.0, goal_yaw}, HybridAStarParams());
+
+        ASSERT_TRUE(result.success) << "goal yaw " << goal_yaw;
+        EXPECT_LT(std::hypot(result.path.back().x - 10.0, result.path.back().y - 6.0), 0.05);
+        EXPECT_NEAR(std::remainder(result.path.back().yaw - goal_yaw, 2.0 * M_PI), 0.0, 0.02) << "goal yaw " << goal_yaw;
+        EXPECT_FALSE(collides(grid, result.path));
+        EXPECT_LT(maxCurvature(result.path), 1.0 / 0.6 + 0.4);
+    }
+}
+
+TEST(Avoidance, MaxPathCostIsZeroInFreeSpaceAndLethalOnObstacles)
+{
+    EXPECT_EQ(maxPathCost(straightBase(5.0), centeredGrid({}), AvoidanceParams()), 0);
+    EXPECT_GE(maxPathCost(straightBase(5.0), centeredGrid({{2.4, -0.15, 2.8, 0.15}}), AvoidanceParams()), 99);
 }

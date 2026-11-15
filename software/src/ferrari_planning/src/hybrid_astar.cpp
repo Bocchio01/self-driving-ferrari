@@ -1,5 +1,7 @@
 #include "ferrari_planning/hybrid_astar.hpp"
 
+#include "ferrari_planning/dubins.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -125,7 +127,7 @@ namespace ferrari_planning
         const int n = params.steering_samples_per_side;
         for (int i = -n; i <= n; ++i)
         {
-            curvatures.push_back(std::tan(params.max_steering_angle * i / std::max(n, 1)) / params.wheelbase);
+            curvatures.push_back(std::tan(params.max_steering_angle * params.steering_margin * i / std::max(n, 1)) / params.wheelbase);
         }
 
         std::vector<Node> nodes;
@@ -154,6 +156,49 @@ namespace ferrari_planning
             {
                 goal_node = index;
                 break;
+            }
+
+            if (params.use_goal_yaw && to_goal <= params.shot_distance)
+            {
+                const double radius = params.wheelbase / std::tan(params.max_steering_angle * params.steering_margin);
+                if (const auto dubins = shortestDubinsPath(current.pose, goal, radius))
+                {
+                    const auto shot = sampleDubinsPath(*dubins, current.pose, params.output_spacing);
+                    bool free = true;
+                    for (const auto &pose : shot)
+                    {
+                        if (footprintCollides(grid, pose, params))
+                        {
+                            free = false;
+                            break;
+                        }
+                    }
+                    if (free)
+                    {
+                        std::vector<PlannerPose> prefix;
+                        for (int i = index; i >= 0; i = nodes[i].parent)
+                        {
+                            prefix.push_back(nodes[i].pose);
+                        }
+                        std::reverse(prefix.begin(), prefix.end());
+
+                        result.path.push_back(prefix.front());
+                        for (size_t i = 1; i < prefix.size(); ++i)
+                        {
+                            const PlannerPose &a = prefix[i - 1];
+                            const PlannerPose &b = prefix[i];
+                            const int pieces = std::max(1, static_cast<int>(std::ceil(std::hypot(b.x - a.x, b.y - a.y) / params.output_spacing)));
+                            for (int k = 1; k <= pieces; ++k)
+                            {
+                                const double t = static_cast<double>(k) / pieces;
+                                result.path.push_back({a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, normalize(a.yaw + normalize(b.yaw - a.yaw) * t)});
+                            }
+                        }
+                        result.path.insert(result.path.end(), shot.begin(), shot.end());
+                        result.success = true;
+                        return result;
+                    }
+                }
             }
 
             for (double kappa : curvatures)

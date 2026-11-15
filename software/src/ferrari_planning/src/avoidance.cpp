@@ -59,6 +59,20 @@ namespace ferrari_planning
         }
     }
 
+    int maxPathCost(const std::vector<PlannerPose> &path, const CostGrid &grid, const AvoidanceParams &params)
+    {
+        int worst = 0;
+        for (const auto &pose : path)
+        {
+            const double c = std::cos(pose.yaw), s = std::sin(pose.yaw);
+            for (double offset : params.footprint_offsets)
+            {
+                worst = std::max(worst, grid.cost(pose.x + c * offset, pose.y + s * offset));
+            }
+        }
+        return worst;
+    }
+
     size_t firstCollisionIndex(const std::vector<PlannerPose> &path, const CostGrid &grid, const AvoidanceParams &params)
     {
         for (size_t i = 0; i < path.size(); ++i)

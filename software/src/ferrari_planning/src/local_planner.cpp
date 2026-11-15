@@ -26,6 +26,7 @@ LocalPlannerNode::LocalPlannerNode(const rclcpp::NodeOptions &options)
     this->odom_frame_ = this->declare_parameter<std::string>("odom_frame", "odom");
     this->costmap_timeout_s_ = this->declare_parameter<double>("costmap_timeout_s", 0.5);
     this->stop_margin_m_ = this->declare_parameter<double>("stop_margin_m", 0.3);
+    this->avoid_cost_threshold_ = this->declare_parameter<int>("avoid_cost_threshold", 15);
     avoidance_params_.max_offset = this->declare_parameter<double>("max_lateral_offset", avoidance_params_.max_offset);
     avoidance_params_.ramp_length = this->declare_parameter<double>("avoidance_ramp_length", avoidance_params_.ramp_length);
     avoidance_params_.deviation_weight = this->declare_parameter<double>("deviation_weight", avoidance_params_.deviation_weight);
@@ -256,6 +257,12 @@ const nav_msgs::msg::Path LocalPlannerNode::computeLocalPath(double lookahead_di
     for (const auto &p : base.poses)
     {
         poses.push_back({p.pose.position.x, p.pose.position.y, tf2::getYaw(p.pose.orientation)});
+    }
+
+    if (ferrari_planning::maxPathCost(poses, costmap_, avoidance_params_) <= avoid_cost_threshold_)
+    {
+        previous_offset_ = 0.0;
+        return base;
     }
 
     const double dx = odom_.pose.pose.position.x - poses.front().x;

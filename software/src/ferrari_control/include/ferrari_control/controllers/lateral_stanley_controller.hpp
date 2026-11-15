@@ -18,4 +18,6 @@ public:
 private:
     double k_gain_{0.0};
     double k_soft_{0.0};
+    double curvature_gain_{1.0};
+    int curvature_horizon_{8};
 };

@@ -23,9 +23,11 @@ namespace ferrari_planning
         double cost_weight = 3.0;
         double steer_penalty = 0.3;
         double steer_change_penalty = 0.5;
-        double goal_tolerance = 0.20;
-        double goal_yaw_tolerance = 0.6;
-        bool use_goal_yaw = false;
+        double goal_tolerance = 0.15;
+        double goal_yaw_tolerance = 0.25;
+        bool use_goal_yaw = true;
+        double shot_distance = 4.0;
+        double steering_margin = 0.75;
         double xy_resolution = 0.10;
         int yaw_bins = 72;
         int max_expansions = 60000;
