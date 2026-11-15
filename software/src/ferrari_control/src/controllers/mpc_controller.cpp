@@ -61,7 +61,7 @@ LifecycleNodeInterface::CallbackReturn MpcControllerNode::on_configure(const rcl
     Eigen::VectorXd s_min = Eigen::Map<Eigen::VectorXd>(s_min_param.data(), s_min_param.size());
     Eigen::VectorXd s_max = Eigen::Map<Eigen::VectorXd>(s_max_param.data(), s_max_param.size());
 
-    s_min(3) = 0.0;
+    s_min(3) = -0.25 * this->max_speed_;
     s_max(3) = +this->max_speed_;
 
     Eigen::VectorXd u_min(2), u_max(2);

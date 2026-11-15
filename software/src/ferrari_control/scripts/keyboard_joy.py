@@ -26,7 +26,7 @@ Keys must be held: the command returns to zero shortly after the last key event.
 
 class KeyboardJoy(Node):
     def __init__(self):
-        super().__init__("keyboard_joy_node")
+        super().__init__("keyboard_joy_node", namespace="control")
 
         self.steering_axis = self.declare_parameter("steering_axis", 0).value
         self.speed_axis = self.declare_parameter("speed_axis", 4).value
