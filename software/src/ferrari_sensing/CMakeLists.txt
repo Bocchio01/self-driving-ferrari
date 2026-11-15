@@ -20,6 +20,17 @@ find_package(cv_bridge REQUIRED)
 add_library(exposure_controller src/exposure_controller.cpp)
 target_include_directories(exposure_controller PUBLIC include)
 
+add_library(ld19_parser src/ld19_parser.cpp)
+target_include_directories(ld19_parser PUBLIC include)
+
+add_executable(lidar_node src/lidar_node.cpp)
+target_link_libraries(lidar_node
+    PRIVATE
+    ld19_parser
+    rclcpp::rclcpp
+    sensor_msgs::sensor_msgs
+)
+
 # ==========================================
 # Target: camera
 # ==========================================
@@ -42,10 +53,11 @@ target_link_libraries(camera_node
 # ==========================================
 install(TARGETS
     camera_node
+    lidar_node
     DESTINATION lib/${PROJECT_NAME}
 )
 
-install(TARGETS exposure_controller
+install(TARGETS exposure_controller ld19_parser
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
@@ -75,6 +87,9 @@ if(BUILD_TESTING)
     find_package(ament_cmake_gtest REQUIRED)
     ament_add_gtest(test_exposure_controller test/test_exposure_controller.cpp)
     target_link_libraries(test_exposure_controller exposure_controller)
+
+    ament_add_gtest(test_ld19_parser test/test_ld19_parser.cpp)
+    target_link_libraries(test_ld19_parser ld19_parser)
 endif()
 
 ament_package()
