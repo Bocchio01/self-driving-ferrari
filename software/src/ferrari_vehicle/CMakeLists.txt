@@ -52,6 +52,15 @@ target_link_libraries(odom_proxy_node
     ${cpp_typesupport_target}
 )
 
+add_executable(lidar_simulator_node src/lidar_simulator.cpp)
+target_link_libraries(lidar_simulator_node
+    PRIVATE
+    rclcpp::rclcpp
+    sensor_msgs::sensor_msgs
+    tf2::tf2
+    ${cpp_typesupport_target}
+)
+
 # ==========================================
 # Target: ferrari_twin_node
 # ==========================================
@@ -88,6 +97,7 @@ ament_export_dependencies(Eigen3)
 install(TARGETS
     odom_proxy_node
     ferrari_twin_node
+    lidar_simulator_node
     DESTINATION lib/${PROJECT_NAME}
 )
 

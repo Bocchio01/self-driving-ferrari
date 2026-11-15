@@ -1,6 +1,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include <random>
+
 #include <tf2/LinearMath/Quaternion.hpp>
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 
@@ -23,12 +25,18 @@ public:
         kc_params.max_steer = this->declare_parameter<double>("max_steering_angle", 0.523); // Roughly 30 degrees in radians
         kc_params.max_speed = this->declare_parameter<double>("max_speed", 20.0);
 
+        speed_scale_error_ = this->declare_parameter<double>("odom_speed_scale_error", 0.0);
+        yaw_rate_bias_ = this->declare_parameter<double>("odom_yaw_rate_bias", 0.0);
+        speed_noise_std_ = this->declare_parameter<double>("odom_speed_noise_std", 0.0);
+        yaw_rate_noise_std_ = this->declare_parameter<double>("odom_yaw_rate_noise_std", 0.0);
+
         VehicleModelVariant model_variant = VehicleModelFactory::create(ModelType::ACKERMANN_KINEMATIC_CARTESIAN, kc_params);
         model_ = std::get<Model>(model_variant);
 
         cmd_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("ackermann_cmd", 10, std::bind(&FerrariTwinNode::cmd_callback, this, _1));
         odom_pub_ = this->create_publisher<ferrari_vehicle::msg::OdomLite>("odom_lite", rclcpp::SensorDataQoS());
         imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("imu_raw", rclcpp::SensorDataQoS());
+        truth_pub_ = this->create_publisher<ferrari_vehicle::msg::OdomLite>("ground_truth", 10);
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(dt * 1000)),
@@ -50,31 +58,53 @@ private:
         x = model_.step(x, u, dt);
         x_ = Model::toStruct(x);
 
-        // Publish Odometry
-        auto odom_msg = ferrari_vehicle::msg::OdomLite();
-        odom_msg.header.stamp = this->get_clock()->now();
-        odom_msg.header.frame_id = "odom";
-        odom_msg.child_frame_id = "base_link";
+        const double true_yaw_rate = (u_.speed / model_.params().wheelbase) * std::tan(u_.steering_angle);
+        const double measured_speed = u_.speed * (1.0 + speed_scale_error_) + speed_noise_std_ * normal_(rng_);
+        const double measured_yaw_rate = true_yaw_rate + yaw_rate_bias_ + yaw_rate_noise_std_ * normal_(rng_);
+        const bool drifting = speed_scale_error_ != 0.0 || yaw_rate_bias_ != 0.0 || speed_noise_std_ != 0.0 || yaw_rate_noise_std_ != 0.0;
+        if (drifting)
+        {
+            const double yaw_mid = odom_yaw_ + 0.5 * measured_yaw_rate * dt;
+            odom_x_ += measured_speed * std::cos(yaw_mid) * dt;
+            odom_y_ += measured_speed * std::sin(yaw_mid) * dt;
+            odom_yaw_ += measured_yaw_rate * dt;
+        }
+        else
+        {
+            odom_x_ = x_.x;
+            odom_y_ = x_.y;
+            odom_yaw_ = x_.yaw;
+        }
 
-        odom_msg.pose.position.x = x_.x;
-        odom_msg.pose.position.y = x_.y;
+        const auto stamp = this->get_clock()->now();
+        auto make_message = [&stamp](double px, double py, double yaw, double v, double w)
+        {
+            auto msg = ferrari_vehicle::msg::OdomLite();
+            msg.header.stamp = stamp;
+            msg.header.frame_id = "odom";
+            msg.child_frame_id = "base_link";
+            msg.pose.position.x = px;
+            msg.pose.position.y = py;
+            tf2::Quaternion q;
+            q.setRPY(0, 0, yaw);
+            msg.pose.orientation.x = q.x();
+            msg.pose.orientation.y = q.y();
+            msg.pose.orientation.z = q.z();
+            msg.pose.orientation.w = q.w();
+            msg.twist.linear.x = v;
+            msg.twist.angular.z = w;
+            return msg;
+        };
 
-        tf2::Quaternion q;
-        q.setRPY(0, 0, x_.yaw);
-        odom_msg.pose.orientation.x = q.x();
-        odom_msg.pose.orientation.y = q.y();
-        odom_msg.pose.orientation.z = q.z();
-        odom_msg.pose.orientation.w = q.w();
-
-        odom_msg.twist.linear.x = u_.speed;
-        odom_msg.twist.angular.z = (u_.speed / model_.params().wheelbase) * std::tan(u_.steering_angle);
+        auto odom_msg = make_message(odom_x_, odom_y_, odom_yaw_, measured_speed, measured_yaw_rate);
         odom_pub_->publish(odom_msg);
+        truth_pub_->publish(make_message(x_.x, x_.y, x_.yaw, u_.speed, true_yaw_rate));
 
         sensor_msgs::msg::Imu imu_msg;
         imu_msg.header.stamp = odom_msg.header.stamp;
         imu_msg.header.frame_id = "imu_link";
         imu_msg.orientation_covariance[0] = -1.0;
-        imu_msg.angular_velocity.z = odom_msg.twist.angular.z;
+        imu_msg.angular_velocity.z = true_yaw_rate;
         imu_msg.linear_acceleration.z = 9.80665;
         for (size_t i = 0; i < 3; ++i)
         {
@@ -87,6 +117,17 @@ private:
     Model model_;
     State x_;
     Command u_;
+
+    double speed_scale_error_ = 0.0;
+    double yaw_rate_bias_ = 0.0;
+    double speed_noise_std_ = 0.0;
+    double yaw_rate_noise_std_ = 0.0;
+    double odom_x_ = 0.0;
+    double odom_y_ = 0.0;
+    double odom_yaw_ = 0.0;
+    std::mt19937 rng_{42};
+    std::normal_distribution<double> normal_{0.0, 1.0};
+    rclcpp::Publisher<ferrari_vehicle::msg::OdomLite>::SharedPtr truth_pub_;
 
     rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr cmd_sub_;
     rclcpp::Publisher<ferrari_vehicle::msg::OdomLite>::SharedPtr odom_pub_;
