@@ -5,13 +5,18 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    platform_arg = DeclareLaunchArgument("platform")
+    platform = LaunchConfiguration("platform")
     vehicle_config_arg = DeclareLaunchArgument("vehicle_config")
     vehicle_config = LaunchConfiguration("vehicle_config")
+    is_onboard = IfCondition(PythonExpression(["'", platform, "' == 'onboard'"]))
+    is_ground = IfCondition(PythonExpression(["'", platform, "' == 'ground'"]))
 
     pkg_path = get_package_share_directory("ferrari_description")
 
@@ -45,6 +50,7 @@ def generate_launch_description():
         name="robot_state_publisher",
         namespace="description",
         parameters=[{"robot_description": robot_description}],
+        condition=is_onboard,
     )
 
     joint_state_publisher_gui_node = Node(
@@ -62,9 +68,9 @@ def generate_launch_description():
         namespace="description",
         parameters=[vehicle_config],
         remappings=[
-            ("odom", "/localization/odom"),
             ("ackermann_cmd", "/vehicle/ackermann_cmd"),
         ],
+        condition=is_ground,
     )
 
     rviz_node = Node(
@@ -73,10 +79,12 @@ def generate_launch_description():
         name="rviz2",
         namespace="description",
         arguments=["-d", rviz_config_file],
+        condition=is_ground,
     )
 
     return LaunchDescription(
         [
+            platform_arg,
             vehicle_config_arg,
             # rqt_node,
             robot_state_publisher_node,

@@ -1,0 +1,23 @@
+/**:
+  ros__parameters:
+    filter: ekf
+    publish_tf: true
+    odom_frame: odom
+    base_frame: base_link
+
+    wheel_speed_variance: 0.0025
+    kinematic_yaw_rate_variance: 0.05
+    standstill_gyro_variance: 0.0001
+    standstill_speed: 0.02
+
+    noise_position: 0.01
+    noise_heading: 0.01
+    noise_speed: 1.0
+    noise_gyro_bias: 0.001
+
+    initial_pose_std: 0.01
+    initial_speed_std: 0.3
+    initial_gyro_bias_std: 0.1
+
+    num_particles: 500
+    seed: 0

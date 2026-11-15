@@ -3,6 +3,8 @@ import sys
 
 from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 sys.path.insert(
     0,
@@ -15,7 +17,7 @@ PACKAGES = [
     # "ferrari_bringup",
     "ferrari_control",
     # "ferrari_dashboard",
-    # "ferrari_description",
+    "ferrari_description",
     "ferrari_localization",
     # "ferrari_mapping",
     # "ferrari_perception",
@@ -26,5 +28,9 @@ PACKAGES = [
 
 
 def generate_launch_description():
-    launch_actions = include_package_launches(PACKAGES, PLATFORM)
-    return LaunchDescription([*launch_actions])
+    launch_actions = include_package_launches(
+        PACKAGES, PLATFORM, extra_arguments=[("filter", LaunchConfiguration("filter"))]
+    )
+    return LaunchDescription(
+        [DeclareLaunchArgument("filter", default_value="ekf"), *launch_actions]
+    )

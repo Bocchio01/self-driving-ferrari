@@ -96,6 +96,14 @@
         <child link="chassis"/>
     </joint>
 
+    <link name="imu_link" />
+
+    <joint name="imu_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <origin xyz="${wheelbase/2} 0 0.03" rpy="0 0 0"/>
+    </joint>
+
     <!-- Chassis -->
     <link name="chassis">
         <collision>

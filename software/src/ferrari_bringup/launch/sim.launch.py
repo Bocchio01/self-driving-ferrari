@@ -3,6 +3,8 @@ import sys
 
 from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 sys.path.insert(
     0,
@@ -10,10 +12,11 @@ sys.path.insert(
 )
 from utils import include_package_launches  # noqa: E402
 
-SIM_ARGUMENTS = [("sim", "true")]
+SIM_ARGUMENTS = [("sim", "true"), ("filter", LaunchConfiguration("filter"))]
 
 ONBOARD_PACKAGES = [
     "ferrari_control",
+    "ferrari_description",
     "ferrari_localization",
     "ferrari_vehicle",
 ]
@@ -28,6 +31,7 @@ GROUND_PACKAGES = [
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument("filter", default_value="ekf"),
             *include_package_launches(
                 ONBOARD_PACKAGES, "onboard", extra_arguments=SIM_ARGUMENTS
             ),
