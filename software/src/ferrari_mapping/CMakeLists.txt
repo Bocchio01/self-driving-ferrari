@@ -24,7 +24,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 
-add_library(slam_core src/occupancy_grid.cpp src/scan_matcher.cpp src/slam_core.cpp)
+add_library(slam_core src/occupancy_grid.cpp src/scan_matcher.cpp src/slam_core.cpp src/costmap.cpp)
 target_include_directories(slam_core PUBLIC include ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(slam_core PUBLIC Eigen3::Eigen ${OpenCV_LIBS})
 
@@ -72,6 +72,9 @@ if(BUILD_TESTING)
     find_package(ament_cmake_gtest REQUIRED)
     ament_add_gtest(test_slam test/test_slam.cpp)
     target_link_libraries(test_slam slam_core)
+
+    ament_add_gtest(test_costmap test/test_costmap.cpp)
+    target_link_libraries(test_costmap slam_core)
 endif()
 
 ament_package()

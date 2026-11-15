@@ -15,6 +15,7 @@
 #include <tf2_ros/transform_broadcaster.hpp>
 #include <tf2_ros/transform_listener.hpp>
 
+#include "ferrari_mapping/costmap.hpp"
 #include "ferrari_mapping/slam_core.hpp"
 
 using namespace ferrari_mapping;
@@ -59,6 +60,15 @@ public:
         params.mapping = mode != "localization";
         slam_ = std::make_unique<SlamCore>(params);
 
+        InflationParams inflation;
+        inflation.inscribed_radius = this->declare_parameter<double>("inscribed_radius", inflation.inscribed_radius);
+        inflation.inflation_radius = this->declare_parameter<double>("inflation_radius", inflation.inflation_radius);
+        inflation.decay = this->declare_parameter<double>("inflation_decay", inflation.decay);
+        inflation_ = inflation;
+        local_costmap_ = std::make_unique<RollingCostmap>(
+            this->declare_parameter<double>("local_costmap_size_m", 12.0), params.grid.resolution, inflation,
+            this->declare_parameter<double>("local_costmap_memory_s", 0.6));
+
         if (!params.mapping)
         {
             OccupancyGrid grid(params.grid);
@@ -80,6 +90,8 @@ public:
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("map", rclcpp::QoS(1).transient_local());
+        global_costmap_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("global_costmap", rclcpp::QoS(1).transient_local());
+        local_costmap_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("local_costmap", 1);
         scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS(), std::bind(&SlamNode::scanCallback, this, std::placeholders::_1));
         save_srv_ = this->create_service<std_srvs::srv::Trigger>("save_map", std::bind(&SlamNode::saveCallback, this, std::placeholders::_1, std::placeholders::_2));
         tf_timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&SlamNode::publishTransform, this));
@@ -144,10 +156,54 @@ private:
             return;
         }
 
-        const SlamResult result = slam_->process(points, Eigen::Vector2d(lidar_in_base_.x, lidar_in_base_.y), toPose2D(odom_to_base));
+        const Pose2D pose_odom = toPose2D(odom_to_base);
+        const SlamResult result = slam_->process(points, Eigen::Vector2d(lidar_in_base_.x, lidar_in_base_.y), pose_odom);
+        publishLocalCostmap(msg->header.stamp, points, pose_odom);
         ++scan_count_;
         matched_count_ += result.matched ? 1 : 0;
         score_sum_ += result.score;
+    }
+
+    static nav_msgs::msg::OccupancyGrid toMessage(const cv::Mat &cost, double origin_x, double origin_y, double resolution, const std::string &frame, const rclcpp::Time &stamp)
+    {
+        nav_msgs::msg::OccupancyGrid msg;
+        msg.header.stamp = stamp;
+        msg.header.frame_id = frame;
+        msg.info.resolution = static_cast<float>(resolution);
+        msg.info.width = cost.cols;
+        msg.info.height = cost.rows;
+        msg.info.origin.position.x = origin_x;
+        msg.info.origin.position.y = origin_y;
+        msg.info.origin.orientation.w = 1.0;
+        msg.data.assign(cost.begin<uint8_t>(), cost.end<uint8_t>());
+        return msg;
+    }
+
+    void publishLocalCostmap(const builtin_interfaces::msg::Time &stamp, const std::vector<Eigen::Vector2d> &points_base, const Pose2D &pose_odom)
+    {
+        const double c = std::cos(pose_odom.yaw), s = std::sin(pose_odom.yaw);
+        std::vector<Eigen::Vector2d> hits;
+        hits.reserve(points_base.size());
+        for (const auto &p : points_base)
+        {
+            hits.emplace_back(pose_odom.x + c * p.x() - s * p.y(), pose_odom.y + s * p.x() + c * p.y());
+        }
+        const double stamp_s = rclcpp::Time(stamp).seconds();
+        local_costmap_->addScan(stamp_s, hits);
+        const CostmapData data = local_costmap_->build(pose_odom.x, pose_odom.y, stamp_s);
+        local_costmap_pub_->publish(toMessage(data.cost, data.origin_x, data.origin_y, data.resolution, odom_frame_, stamp));
+    }
+
+    void publishGlobalCostmap()
+    {
+        const OccupancyGrid &grid = slam_->grid();
+        cv::Mat mask = grid.logOdds() > grid.params().occupied_threshold;
+        if (cv::countNonZero(mask) == 0)
+        {
+            return;
+        }
+        const cv::Mat cost = inflateObstacles(mask, grid.params().resolution, inflation_);
+        global_costmap_pub_->publish(toMessage(cost, grid.params().origin_x, grid.params().origin_y, grid.params().resolution, map_frame_, this->now()));
     }
 
     void publishTransform()
@@ -193,6 +249,7 @@ private:
             }
         }
         map_pub_->publish(msg);
+        publishGlobalCostmap();
     }
 
     void saveCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>, std::shared_ptr<std_srvs::srv::Trigger::Response> response)
@@ -217,6 +274,10 @@ private:
     std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_pub_;
+    rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr global_costmap_pub_;
+    rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr local_costmap_pub_;
+    InflationParams inflation_;
+    std::unique_ptr<RollingCostmap> local_costmap_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_srv_;
     rclcpp::TimerBase::SharedPtr tf_timer_, map_timer_, stats_timer_;
