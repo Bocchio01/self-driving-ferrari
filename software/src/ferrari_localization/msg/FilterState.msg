@@ -1,0 +1,16 @@
+std_msgs/Header header
+float64 x
+float64 y
+float64 yaw
+float64 speed
+float64 yaw_rate
+float64 gyro_bias
+float64 x_std
+float64 y_std
+float64 yaw_std
+float64 speed_std
+float64 yaw_rate_std
+float64 gyro_bias_std
+float64 measured_wheel_speed
+float64 measured_kinematic_yaw_rate
+float64 measured_gyro_z

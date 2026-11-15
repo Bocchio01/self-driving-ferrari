@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <vector>
 
 #include <Eigen/Dense>
 
@@ -60,6 +61,7 @@ namespace ferrari_localization
         virtual void updateGyro(double gyro_z, double variance) = 0;
         virtual void updateGyroBias(double gyro_z, double variance) = 0;
         virtual Estimate estimate() const = 0;
+        virtual std::vector<StateVector> particles() const { return {}; }
     };
 
     class EkfEstimator : public StateEstimator
@@ -95,6 +97,7 @@ namespace ferrari_localization
         void updateGyro(double gyro_z, double variance) override;
         void updateGyroBias(double gyro_z, double variance) override;
         Estimate estimate() const override;
+        std::vector<StateVector> particles() const override;
 
     private:
         void ensembleUpdate(double measurement, double variance, const std::function<double(const Eigen::VectorXd &)> &predicted_measurement);

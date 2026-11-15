@@ -206,6 +206,17 @@ namespace ferrari_localization
                        { return p(GYRO_BIAS); });
     }
 
+    std::vector<StateVector> ParticleEstimator::particles() const
+    {
+        std::vector<StateVector> result;
+        result.reserve(filter_.particles().size());
+        for (const auto &particle : filter_.particles())
+        {
+            result.push_back(particle);
+        }
+        return result;
+    }
+
     Estimate ParticleEstimator::estimate() const
     {
         const std::vector<int> angles = {YAW};

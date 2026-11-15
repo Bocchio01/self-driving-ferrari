@@ -4,12 +4,14 @@
 #include <memory>
 #include <string>
 
+#include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <tf2_ros/transform_broadcaster.hpp>
 
+#include "ferrari_localization/msg/filter_state.hpp"
 #include "ferrari_localization/state_estimator.hpp"
 
 using namespace ferrari_localization;
@@ -58,6 +60,9 @@ public:
         RCLCPP_INFO(this->get_logger(), "Localization filter: %s", filter == "pf" ? "particle filter" : "extended kalman filter");
 
         odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+        state_pub_ = this->create_publisher<ferrari_localization::msg::FilterState>("filter_state", 10);
+        particles_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("particles", 1);
+        particles_period_ = this->declare_parameter<double>("particles_period_s", 0.1);
         if (publish_tf_)
         {
             tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -96,6 +101,7 @@ private:
         }
 
         const double gyro_z = msg->angular_velocity.z;
+        measured_gyro_z_ = gyro_z;
         const bool wheel_fresh = (this->now() - last_wheel_time_).seconds() < wheel_timeout_;
         if (wheel_fresh && std::abs(last_wheel_speed_) < standstill_speed_)
         {
@@ -119,6 +125,7 @@ private:
             return;
         }
 
+        measured_kinematic_yaw_rate_ = msg->twist.twist.angular.z;
         const double speed_variance = msg->twist.covariance[0] > 0.0 ? msg->twist.covariance[0] : default_speed_variance_;
         const double yaw_rate_variance = msg->twist.covariance[35] > 0.0 ? msg->twist.covariance[35] : default_yaw_rate_variance_;
 
@@ -165,6 +172,9 @@ private:
         odom.twist.covariance[35] = e.covariance(YAW_RATE, YAW_RATE);
         odom_pub_->publish(odom);
 
+        publishFilterState(stamp, e);
+        publishParticles(stamp);
+
         if (tf_broadcaster_)
         {
             geometry_msgs::msg::TransformStamped tf;
@@ -177,9 +187,64 @@ private:
         }
     }
 
+    void publishFilterState(const rclcpp::Time &stamp, const Estimate &e)
+    {
+        ferrari_localization::msg::FilterState msg;
+        msg.header.stamp = stamp;
+        msg.header.frame_id = odom_frame_;
+        msg.x = e.state(X);
+        msg.y = e.state(Y);
+        msg.yaw = e.state(YAW);
+        msg.speed = e.state(SPEED);
+        msg.yaw_rate = e.state(YAW_RATE);
+        msg.gyro_bias = e.state(GYRO_BIAS);
+        msg.x_std = std::sqrt(e.covariance(X, X));
+        msg.y_std = std::sqrt(e.covariance(Y, Y));
+        msg.yaw_std = std::sqrt(e.covariance(YAW, YAW));
+        msg.speed_std = std::sqrt(e.covariance(SPEED, SPEED));
+        msg.yaw_rate_std = std::sqrt(e.covariance(YAW_RATE, YAW_RATE));
+        msg.gyro_bias_std = std::sqrt(e.covariance(GYRO_BIAS, GYRO_BIAS));
+        msg.measured_wheel_speed = last_wheel_speed_;
+        msg.measured_kinematic_yaw_rate = measured_kinematic_yaw_rate_;
+        msg.measured_gyro_z = measured_gyro_z_;
+        state_pub_->publish(msg);
+    }
+
+    void publishParticles(const rclcpp::Time &stamp)
+    {
+        if (particles_pub_->get_subscription_count() == 0 || (stamp - last_particles_stamp_).seconds() < particles_period_)
+        {
+            return;
+        }
+
+        const auto particles = estimator_->particles();
+        if (particles.empty())
+        {
+            return;
+        }
+        last_particles_stamp_ = stamp;
+
+        geometry_msgs::msg::PoseArray msg;
+        msg.header.stamp = stamp;
+        msg.header.frame_id = odom_frame_;
+        msg.poses.reserve(particles.size());
+        for (const auto &particle : particles)
+        {
+            geometry_msgs::msg::Pose pose;
+            pose.position.x = particle(X);
+            pose.position.y = particle(Y);
+            pose.orientation.z = std::sin(0.5 * particle(YAW));
+            pose.orientation.w = std::cos(0.5 * particle(YAW));
+            msg.poses.push_back(pose);
+        }
+        particles_pub_->publish(msg);
+    }
+
     std::unique_ptr<StateEstimator> estimator_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+    rclcpp::Publisher<ferrari_localization::msg::FilterState>::SharedPtr state_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr particles_pub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_sub_;
 
@@ -200,6 +265,10 @@ private:
     rclcpp::Time last_step_time_{0, 0, RCL_ROS_TIME};
     rclcpp::Time last_wheel_time_{0, 0, RCL_ROS_TIME};
     double last_wheel_speed_ = 0.0;
+    double measured_kinematic_yaw_rate_ = std::nan("");
+    double measured_gyro_z_ = std::nan("");
+    double particles_period_ = 0.1;
+    rclcpp::Time last_particles_stamp_{0, 0, RCL_ROS_TIME};
 };
 
 int main(int argc, char **argv)

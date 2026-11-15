@@ -21,6 +21,13 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+    "msg/FilterState.msg"
+    DEPENDENCIES std_msgs
+)
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_library(state_estimator src/state_estimator.cpp)
 target_include_directories(state_estimator PUBLIC include)
@@ -35,6 +42,7 @@ target_link_libraries(localization_node
     sensor_msgs::sensor_msgs
     geometry_msgs::geometry_msgs
     tf2_ros::tf2_ros
+    ${cpp_typesupport_target}
 )
 
 # ==========================================
@@ -64,5 +72,7 @@ if(BUILD_TESTING)
     ament_add_gtest(test_state_estimator test/test_state_estimator.cpp)
     target_link_libraries(test_state_estimator state_estimator)
 endif()
+
+ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()
