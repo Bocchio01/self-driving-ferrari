@@ -77,7 +77,7 @@ LifecycleNodeInterface::CallbackReturn LateralMpcControllerNode::on_configure(co
 
 void LateralMpcControllerNode::computeControlCommand()
 {
-    if (!is_active_)
+    if (!is_active_ || !inputsFresh())
         return;
 
     ferrari_planning::msg::Trajectory current_trajectory;

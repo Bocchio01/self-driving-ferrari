@@ -25,6 +25,7 @@ public:
 protected:
     void publishCmd(ackermann_msgs::msg::AckermannDriveStamped msg);
     virtual void computeControlCommand() = 0;
+    bool inputsFresh();
 
     // Lifecycle transition hooks
     LifecycleNodeInterface::CallbackReturn on_configure(const rclcpp_lifecycle::State &) override;
@@ -41,6 +42,10 @@ protected:
     std::chrono::duration<double> control_period_;
 
     bool is_active_ = false;
+
+    double input_timeout_s_ = 0.5;
+    rclcpp::Time last_odom_time_{0, 0, RCL_ROS_TIME};
+    rclcpp::Time last_trajectory_time_{0, 0, RCL_ROS_TIME};
 
     // Command publisher name
     std::string cmd_pub_name_;

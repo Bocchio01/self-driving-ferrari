@@ -17,6 +17,8 @@ Controller::Controller(const std::string &cmd_pub_name, const std::string &node_
     wheel_diameter_ = this->declare_parameter<double>("wheel_diameter", 0.0575);
     wheel_thickness_ = this->declare_parameter<double>("wheel_thickness", 0.025);
 
+    input_timeout_s_ = this->declare_parameter<double>("input_timeout_s", 0.5);
+
     double control_rate_hz_ = this->declare_parameter<double>("control_rate_hz", 50.0);
     control_period_ = std::chrono::duration<double>(1.0 / control_rate_hz_);
 
@@ -34,12 +36,22 @@ void Controller::publishCmd(ackermann_msgs::msg::AckermannDriveStamped msg)
 void Controller::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     odom_ = *msg;
+    last_odom_time_ = this->now();
 }
 
 void Controller::localTrajectoryCallback(const ferrari_planning::msg::Trajectory::SharedPtr msg)
 {
     std::lock_guard<std::mutex> lk(local_trajectory_mutex_);
     local_trajectory_ = *msg;
+    last_trajectory_time_ = this->now();
+}
+
+bool Controller::inputsFresh()
+{
+    const auto now = this->now();
+    const auto timeout = rclcpp::Duration::from_seconds(input_timeout_s_);
+    return last_odom_time_.nanoseconds() > 0 && last_trajectory_time_.nanoseconds() > 0 &&
+           (now - last_odom_time_) <= timeout && (now - last_trajectory_time_) <= timeout;
 }
 
 LifecycleNodeInterface::CallbackReturn Controller::on_configure(const rclcpp_lifecycle::State &)

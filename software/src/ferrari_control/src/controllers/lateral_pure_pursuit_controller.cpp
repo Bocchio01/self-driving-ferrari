@@ -32,7 +32,7 @@ LateralPurePursuitControllerNode::on_configure(const rclcpp_lifecycle::State &st
 void LateralPurePursuitControllerNode::computeControlCommand()
 {
     std::lock_guard<std::mutex> lock(local_trajectory_mutex_);
-    if (local_trajectory_.points.empty())
+    if (local_trajectory_.points.empty() || !inputsFresh())
         return;
 
     // Calculate dynamic lookahead based on the live speed

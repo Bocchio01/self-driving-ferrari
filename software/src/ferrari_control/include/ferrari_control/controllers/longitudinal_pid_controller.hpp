@@ -13,6 +13,9 @@ public:
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     on_configure(const rclcpp_lifecycle::State &state) override;
 
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_activate(const rclcpp_lifecycle::State &state) override;
+
     void computeControlCommand() override;
 
 private:
@@ -25,5 +28,6 @@ private:
 
     double integral_error_{0.0};
     double previous_error_{0.0};
+    bool has_previous_error_{false};
     rclcpp::Time last_time_;
 };

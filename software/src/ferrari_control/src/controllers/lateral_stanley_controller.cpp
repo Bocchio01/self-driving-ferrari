@@ -32,7 +32,7 @@ LateralStanleyControllerNode::on_configure(const rclcpp_lifecycle::State &state)
 void LateralStanleyControllerNode::computeControlCommand()
 {
     std::lock_guard<std::mutex> lock(local_trajectory_mutex_);
-    if (local_trajectory_.points.empty())
+    if (local_trajectory_.points.empty() || !inputsFresh())
         return;
 
     double current_velocity = odom_.twist.twist.linear.x;

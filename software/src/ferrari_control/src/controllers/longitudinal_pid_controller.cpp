@@ -38,10 +38,19 @@ LongitudinalPidControllerNode::on_configure(const rclcpp_lifecycle::State &state
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+LongitudinalPidControllerNode::on_activate(const rclcpp_lifecycle::State &state)
+{
+    integral_error_ = 0.0;
+    previous_error_ = 0.0;
+    has_previous_error_ = false;
+    return Controller::on_activate(state);
+}
+
 void LongitudinalPidControllerNode::computeControlCommand()
 {
     std::lock_guard<std::mutex> lock(local_trajectory_mutex_);
-    if (local_trajectory_.points.empty())
+    if (local_trajectory_.points.empty() || !inputsFresh())
         return;
 
     // Extract current state
@@ -53,12 +62,17 @@ void LongitudinalPidControllerNode::computeControlCommand()
 
     double error = target_velocity - current_velocity;
 
-    // PID terms
-    integral_error_ += error * control_period_.count();
-    double derivative = (error - previous_error_) / control_period_.count();
+    double derivative = has_previous_error_ ? (error - previous_error_) / control_period_.count() : 0.0;
     previous_error_ = error;
+    has_previous_error_ = true;
 
-    double acceleration_cmd = (kp_ * error) + (ki_ * integral_error_) + (kd_ * derivative);
+    double unsaturated_acceleration = (kp_ * error) + (ki_ * integral_error_) + (kd_ * derivative);
+    double acceleration_cmd = std::clamp(unsaturated_acceleration, max_braking_, max_acceleration_);
+
+    if (acceleration_cmd == unsaturated_acceleration)
+    {
+        integral_error_ += error * control_period_.count();
+    }
 
     // Apply acceleration to compute the final speed command
     double speed_cmd = current_velocity + (acceleration_cmd * control_period_.count());
