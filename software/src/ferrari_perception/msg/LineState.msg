@@ -1,0 +1,13 @@
+std_msgs/Header header
+bool detected
+bool tracking
+float64 lateral_offset
+float64 heading
+float64 curvature
+float64 coverage
+float64 rms_error
+int32 point_count
+int32 lost_frames
+float64 mean_luma
+float64 saturated_fraction
+float64 dark_fraction
