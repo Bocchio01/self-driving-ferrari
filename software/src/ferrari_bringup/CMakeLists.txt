@@ -17,6 +17,7 @@ find_package(ament_cmake REQUIRED)
 # ==========================================
 install(DIRECTORY
     launch
+    plotjuggler
     DESTINATION share/${PROJECT_NAME}
 )
 
