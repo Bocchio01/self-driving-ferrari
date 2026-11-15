@@ -17,6 +17,9 @@ find_package(sensor_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(cv_bridge REQUIRED)
 
+add_library(exposure_controller src/exposure_controller.cpp)
+target_include_directories(exposure_controller PUBLIC include)
+
 # ==========================================
 # Target: camera
 # ==========================================
@@ -42,6 +45,12 @@ install(TARGETS
     DESTINATION lib/${PROJECT_NAME}
 )
 
+install(TARGETS exposure_controller
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
 install(
     DIRECTORY include/
     DESTINATION include/${PROJECT_NAME}
@@ -62,6 +71,10 @@ if(BUILD_TESTING)
     set(ament_cmake_copyright_FOUND TRUE)
     set(ament_cmake_cpplint_FOUND TRUE)
     ament_lint_auto_find_test_dependencies()
+
+    find_package(ament_cmake_gtest REQUIRED)
+    ament_add_gtest(test_exposure_controller test/test_exposure_controller.cpp)
+    target_link_libraries(test_exposure_controller exposure_controller)
 endif()
 
 ament_package()
