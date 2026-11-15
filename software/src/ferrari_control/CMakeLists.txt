@@ -27,6 +27,13 @@ find_package(Eigen3 REQUIRED)
 find_package(OsqpEigen REQUIRED)
 find_package(ferrari_vehicle REQUIRED)
 find_package(ferrari_planning REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+    "msg/TrackingError.msg"
+    DEPENDENCIES std_msgs
+)
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # ==========================================
 # Shared trajectory_utils
@@ -172,9 +179,23 @@ target_link_libraries(controller_multiplexer_node
 )
 
 # ==========================================
+# Target tracking_monitor_node
+# ==========================================
+add_executable(tracking_monitor_node src/tracking_monitor.cpp)
+target_include_directories(tracking_monitor_node PUBLIC include)
+target_link_libraries(tracking_monitor_node
+    PRIVATE
+    rclcpp::rclcpp
+    nav_msgs::nav_msgs
+    trajectory_utils
+    ${cpp_typesupport_target}
+)
+
+# ==========================================
 # Installation
 # ==========================================
 install(TARGETS
+    tracking_monitor_node
     joypad_controller_node
     lateral_mpc_controller_node
     lateral_pure_pursuit_controller_node
@@ -214,5 +235,7 @@ if(BUILD_TESTING)
     ament_add_gtest(test_trajectory_utils test/test_trajectory_utils.cpp)
     target_link_libraries(test_trajectory_utils trajectory_utils)
 endif()
+
+ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()

@@ -196,6 +196,18 @@ def generate_launch_description():
         ],
     )
 
+    tracking_monitor_node = Node(
+        package="ferrari_control",
+        executable="tracking_monitor_node",
+        name="tracking_monitor_node",
+        namespace="control",
+        condition=IfCondition(PythonExpression(["'", platform, "' == 'ground'"])),
+        remappings=[
+            ("odom", "/localization/odom"),
+            ("local_trajectory", "/planning/local_trajectory"),
+        ],
+    )
+
     return LaunchDescription(
         [
             vehicle_config_arg,
@@ -209,5 +221,6 @@ def generate_launch_description():
             longitudinal_pid_controller_node,
             controller_multiplexer_node,
             controller_visualizer_node,
+            tracking_monitor_node,
         ]
     )
