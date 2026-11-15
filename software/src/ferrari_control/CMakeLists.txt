@@ -187,6 +187,7 @@ install(TARGETS
 
 install(PROGRAMS
     scripts/controller_visualizer.py
+    scripts/keyboard_joy.py
     DESTINATION lib/${PROJECT_NAME}
 )
 
