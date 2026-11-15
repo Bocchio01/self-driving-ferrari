@@ -75,7 +75,7 @@ def generate_launch_description():
             vehicle_config,
             {
                 "odom_speed_scale_error": drift_value(0.03),
-                "odom_yaw_rate_bias": drift_value(0.03),
+                "odom_steering_offset": drift_value(0.008),
                 "odom_speed_noise_std": drift_value(0.02),
                 "odom_yaw_rate_noise_std": drift_value(0.02),
             },

@@ -45,6 +45,7 @@ public:
             y_ = msg->pose.position.y;
             const auto &q = msg->pose.orientation;
             yaw_ = std::atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
+            pose_stamp_ = msg->header.stamp;
             has_pose_ = true; });
         timer_ = this->create_wall_timer(std::chrono::duration<double>(1.0 / rate_hz), std::bind(&LidarSimulatorNode::publishScan, this));
     }
@@ -93,7 +94,7 @@ private:
         const double oy = y_ + sin_yaw * lidar_x_ + cos_yaw * lidar_y_;
 
         sensor_msgs::msg::LaserScan scan;
-        scan.header.stamp = this->now();
+        scan.header.stamp = pose_stamp_;
         scan.header.frame_id = frame_id_;
         scan.angle_min = static_cast<float>(-M_PI);
         scan.angle_increment = static_cast<float>(2.0 * M_PI / bins_);
@@ -125,6 +126,7 @@ private:
     std::string frame_id_;
     double x_ = 0.0, y_ = 0.0, yaw_ = 0.0;
     bool has_pose_ = false;
+    builtin_interfaces::msg::Time pose_stamp_;
     std::mt19937 rng_{7};
 
     rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr scan_pub_;

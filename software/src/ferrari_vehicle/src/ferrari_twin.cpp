@@ -26,7 +26,7 @@ public:
         kc_params.max_speed = this->declare_parameter<double>("max_speed", 20.0);
 
         speed_scale_error_ = this->declare_parameter<double>("odom_speed_scale_error", 0.0);
-        yaw_rate_bias_ = this->declare_parameter<double>("odom_yaw_rate_bias", 0.0);
+        steering_offset_ = this->declare_parameter<double>("odom_steering_offset", 0.0);
         speed_noise_std_ = this->declare_parameter<double>("odom_speed_noise_std", 0.0);
         yaw_rate_noise_std_ = this->declare_parameter<double>("odom_yaw_rate_noise_std", 0.0);
 
@@ -59,9 +59,10 @@ private:
         x_ = Model::toStruct(x);
 
         const double true_yaw_rate = (u_.speed / model_.params().wheelbase) * std::tan(u_.steering_angle);
-        const double measured_speed = u_.speed * (1.0 + speed_scale_error_) + speed_noise_std_ * normal_(rng_);
-        const double measured_yaw_rate = true_yaw_rate + yaw_rate_bias_ + yaw_rate_noise_std_ * normal_(rng_);
-        const bool drifting = speed_scale_error_ != 0.0 || yaw_rate_bias_ != 0.0 || speed_noise_std_ != 0.0 || yaw_rate_noise_std_ != 0.0;
+        const bool moving = std::abs(u_.speed) > 1e-3;
+        const double measured_speed = u_.speed * (1.0 + speed_scale_error_) + (moving ? speed_noise_std_ * normal_(rng_) : 0.0);
+        const double measured_yaw_rate = (u_.speed / model_.params().wheelbase) * std::tan(u_.steering_angle + steering_offset_) + (moving ? yaw_rate_noise_std_ * normal_(rng_) : 0.0);
+        const bool drifting = speed_scale_error_ != 0.0 || steering_offset_ != 0.0 || speed_noise_std_ != 0.0 || yaw_rate_noise_std_ != 0.0;
         if (drifting)
         {
             const double yaw_mid = odom_yaw_ + 0.5 * measured_yaw_rate * dt;
@@ -119,7 +120,7 @@ private:
     Command u_;
 
     double speed_scale_error_ = 0.0;
-    double yaw_rate_bias_ = 0.0;
+    double steering_offset_ = 0.0;
     double speed_noise_std_ = 0.0;
     double yaw_rate_noise_std_ = 0.0;
     double odom_x_ = 0.0;
