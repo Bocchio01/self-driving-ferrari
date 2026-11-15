@@ -97,6 +97,12 @@ install(DIRECTORY
     DESTINATION share/${PROJECT_NAME}
 )
 
+install(DIRECTORY
+    scripts/f1tenth_racetracks
+    DESTINATION share/${PROJECT_NAME}
+    PATTERN ".git" EXCLUDE
+)
+
 ament_export_dependencies(rosidl_default_runtime)
 
 # =========================================

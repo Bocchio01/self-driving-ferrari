@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
 
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
@@ -13,18 +15,26 @@ import os
 class MockGlobalPlannerNode(Node):
     def __init__(self):
         super().__init__("mock_global_planner_node")
-        CSV_BASE_PATH = "/home/bocchio/Documents/github/self-driving-ferrari/software/src/ferrari_planning/scripts/f1tenth_racetracks"
+        default_tracks_dir = os.path.join(
+            get_package_share_directory("ferrari_planning"), "f1tenth_racetracks"
+        )
+        csv_base_path = self.declare_parameter("tracks_dir", default_tracks_dir).value
 
         self.scale = self.declare_parameter("scale", 45.0).value
         track_name = self.declare_parameter("track_name", "Monza").value
 
         self.poses = []
-        self.publisher_ = self.create_publisher(Path, "global_path", 10)
+        latched_qos = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        self.publisher_ = self.create_publisher(Path, "global_path", latched_qos)
 
         self.get_logger().info(f"Loading track from {track_name}...")
-        self.load_track(f"{CSV_BASE_PATH}/{track_name}/{track_name}_raceline.csv")
+        self.load_track(f"{csv_base_path}/{track_name}/{track_name}_raceline.csv")
 
-        # Set up a timer to publish the path every 5 seconds
+        self.publish_path()
         self.create_timer(5.0, self.publish_path)
 
     def load_track(self, file_path):

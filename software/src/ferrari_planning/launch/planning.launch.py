@@ -43,7 +43,7 @@ def generate_launch_description():
         parameters=[
             {
                 "lookahead_distance": 5.0,
-                "control_rate_hz": 10.0,
+                "update_rate_hz": 10.0,
             },
         ],
     )

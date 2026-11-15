@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
 import math
 
-from tf2_ros import TransformBroadcaster
-from nav_msgs.msg import Odometry
-from sensor_msgs.msg import JointState
-from geometry_msgs.msg import TransformStamped
+import rclpy
 from ackermann_msgs.msg import AckermannDriveStamped
+from geometry_msgs.msg import TransformStamped
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
+from tf2_ros import TransformBroadcaster
+
+JOINT_STATE_RATE_HZ = 30.0
 
 
 class FerrariStatePublisher(Node):
@@ -37,6 +39,8 @@ class FerrariStatePublisher(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.joint_pub = self.create_publisher(JointState, "joint_states", 10)
 
+        self.create_timer(1.0 / JOINT_STATE_RATE_HZ, self.publish_joint_states)
+
     def odom_callback(self, msg: Odometry):
         # Broadcast the transform from odom to base_link
         t = TransformStamped()
@@ -49,7 +53,7 @@ class FerrariStatePublisher(Node):
         t.transform.rotation = msg.pose.pose.orientation
         self.tf_broadcaster.sendTransform(t)
 
-        # Publish the joint states
+    def publish_joint_states(self):
         current_time = self.get_clock().now()
         dt = (current_time - self.last_time).nanoseconds / 1e9
         self.last_time = current_time
@@ -58,7 +62,7 @@ class FerrariStatePublisher(Node):
         self.wheel_angle = math.fmod(self.wheel_angle, 2 * math.pi)
 
         joint_msg = JointState()
-        joint_msg.header.stamp = msg.header.stamp
+        joint_msg.header.stamp = current_time.to_msg()
         joint_msg.name = [
             "front_wheel_right_hinge",
             "front_wheel_left_hinge",
@@ -91,7 +95,7 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

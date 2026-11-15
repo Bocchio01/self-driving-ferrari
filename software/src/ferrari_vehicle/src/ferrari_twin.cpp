@@ -26,7 +26,7 @@ public:
         model_ = std::get<Model>(model_variant);
 
         cmd_sub_ = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>("ackermann_cmd", 10, std::bind(&FerrariTwinNode::cmd_callback, this, _1));
-        odom_pub_ = this->create_publisher<ferrari_vehicle::msg::OdomLite>("odom", 10);
+        odom_pub_ = this->create_publisher<ferrari_vehicle::msg::OdomLite>("odom_lite", rclcpp::SensorDataQoS());
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(dt * 1000)),

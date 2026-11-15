@@ -10,6 +10,8 @@ def generate_launch_description():
     platform = LaunchConfiguration("platform")
     vehicle_config_arg = DeclareLaunchArgument("vehicle_config")
     vehicle_config = LaunchConfiguration("vehicle_config")
+    sim_arg = DeclareLaunchArgument("sim", default_value="false")
+    sim = LaunchConfiguration("sim")
 
     micro_ros_agent = ExecuteProcess(
         cmd=[
@@ -37,7 +39,9 @@ def generate_launch_description():
         name="micro_ros_agent_docker",
         output="screen",
         emulate_tty=True,
-        condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
+        condition=IfCondition(
+            PythonExpression(["'", platform, "' == 'onboard' and '", sim, "' != 'true'"])
+        ),
     )
 
     odom_proxy_node = Node(
@@ -47,7 +51,9 @@ def generate_launch_description():
         namespace="vehicle",
         output="screen",
         parameters=[vehicle_config],
-        condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
+        condition=IfCondition(
+            PythonExpression(["'", platform, "' == 'onboard' or '", sim, "' == 'true'"])
+        ),
     )
 
     ferrari_twin_node = Node(
@@ -57,13 +63,14 @@ def generate_launch_description():
         namespace="vehicle",
         output="screen",
         parameters=[vehicle_config],
-        condition=IfCondition(PythonExpression(["'", platform, "' == 'ground'"])),
+        condition=IfCondition(PythonExpression(["'", sim, "' == 'true'"])),
     )
 
     return LaunchDescription(
         [
             platform_arg,
             vehicle_config_arg,
+            sim_arg,
             micro_ros_agent,
             odom_proxy_node,
             ferrari_twin_node,

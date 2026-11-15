@@ -1,0 +1,6 @@
+[submodule "firmware/extra_packages/ackermann_msgs"]
+	path = firmware/extra_packages/ackermann_msgs
+	url = https://github.com/ros-drivers/ackermann_msgs
+[submodule "software/src/ferrari_planning/scripts/f1tenth_racetracks"]
+	path = software/src/ferrari_planning/scripts/f1tenth_racetracks
+	url = https://github.com/f1tenth/f1tenth_racetracks.git

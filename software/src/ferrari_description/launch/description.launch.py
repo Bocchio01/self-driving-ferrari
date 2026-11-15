@@ -1,9 +1,9 @@
 import os
 
-import yaml
 import xacro
+import yaml
 from ament_index_python.packages import get_package_share_directory
-from launch import LaunchContext, LaunchDescription
+from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -32,9 +32,6 @@ def generate_launch_description():
 
     robot_description_config = xacro.process_file(xacro_file, mappings=xacro_mappings)
     robot_description = robot_description_config.toprettyxml(indent="  ")
-    generated_urdf_path = os.path.join(pkg_path, "urdf", "ferrari.urdf")
-    with open(generated_urdf_path, "w") as f:
-        f.write(robot_description)
 
     rqt_node = Node(
         package="rqt_gui",

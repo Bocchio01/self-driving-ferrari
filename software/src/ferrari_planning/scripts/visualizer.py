@@ -85,14 +85,24 @@ def main(args=None):
         ax1.set_xlabel("X (m)")
         ax1.set_ylabel("Y (m)")
         ax1.grid(True)
+
+        # Track if we have anything to put in the legend
+        draw_legend = False
+
         if g_x:
             ax1.plot(g_x, g_y, "k--", label="Global Path", alpha=0.5)
+            draw_legend = True
         if l_x:
             ax1.plot(l_x, l_y, "b-", label="Local Path", linewidth=2)
             # Plot the start of the local path with a red dot to show vehicle position
             ax1.plot(l_x[0], l_y[0], "ro", label="Vehicle")
+            draw_legend = True
+
         ax1.axis("equal")  # Keep aspect ratio 1:1 for the map
-        ax1.legend(loc="upper right")
+
+        # FIX 1: Only call legend if there are labeled artists
+        if draw_legend:
+            ax1.legend(loc="upper right")
 
         # Update ax2 (Speed Profile)
         ax2.cla()
@@ -105,8 +115,11 @@ def main(args=None):
             ax2.fill_between(t_t, t_v, alpha=0.2, color="red")
             ax2.set_ylim(bottom=0.0)
 
-    # Use FuncAnimation to redraw at 10 Hz (100 ms interval)
-    ani = animation.FuncAnimation(fig, update_plot, interval=100)
+    # FIX 2: Disable cache_frame_data to prevent unbounded memory warnings
+    ani = animation.FuncAnimation(
+        fig, update_plot, interval=100, cache_frame_data=False
+    )
+
     plt.tight_layout()
     plt.show()  # This blocks the main thread until the window is closed
 
