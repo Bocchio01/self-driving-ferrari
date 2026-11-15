@@ -27,7 +27,11 @@ def generate_launch_description():
             }
         ],
         remappings=[("scan", "/sensing/lidar/scan")],
-        condition=IfCondition(PythonExpression(["'", platform, "' == 'onboard'"])),
+        condition=IfCondition(
+            PythonExpression(
+                ["'", platform, "' == 'onboard' and '", LaunchConfiguration("slam_mode"), "' != 'off'"]
+            )
+        ),
     )
 
     return LaunchDescription(

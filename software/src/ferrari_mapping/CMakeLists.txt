@@ -44,7 +44,12 @@ install(TARGETS slam_node
     DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY launch
+install(PROGRAMS
+    scripts/evaluate_slam.py
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY launch config
     DESTINATION share/${PROJECT_NAME}
 )
 

@@ -117,6 +117,7 @@ private:
             try
             {
                 odom_to_base = tf_buffer_->lookupTransform(odom_frame_, base_frame_, tf2::TimePointZero);
+                ++stale_odometry_count_;
             }
             catch (const tf2::TransformException &e)
             {
@@ -206,8 +207,8 @@ private:
         {
             return;
         }
-        RCLCPP_INFO(get_logger(), "slam: %lu scans, %.0f%% matched, mean score %.2f, %lu keyframes", static_cast<unsigned long>(scan_count_),
-                    100.0 * matched_count_ / scan_count_, score_sum_ / scan_count_, static_cast<unsigned long>(slam_->keyframeCount()));
+        RCLCPP_INFO(get_logger(), "slam: %lu scans, %.0f%% matched, mean score %.2f, %lu keyframes, %lu scans without exact odometry stamp", static_cast<unsigned long>(scan_count_),
+                    100.0 * matched_count_ / scan_count_, score_sum_ / scan_count_, static_cast<unsigned long>(slam_->keyframeCount()), static_cast<unsigned long>(stale_odometry_count_));
     }
 
     std::string map_frame_, odom_frame_, base_frame_, lidar_frame_, save_path_;
@@ -224,6 +225,7 @@ private:
     bool lidar_ready_ = false;
     size_t scan_count_ = 0;
     size_t matched_count_ = 0;
+    size_t stale_odometry_count_ = 0;
     double score_sum_ = 0.0;
 };
 
