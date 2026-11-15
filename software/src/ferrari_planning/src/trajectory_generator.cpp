@@ -77,6 +77,8 @@ void TrajectoryGeneratorNode::localPathCallback(const nav_msgs::msg::Path::Share
         velocities[i] = std::min(velocities[i], v_accel);
     }
 
+    velocities[n - 1] = 0.0;
+
     // Backward Pass (Deceleration Limit)
     for (int i = n - 2; i >= 0; --i)
     {

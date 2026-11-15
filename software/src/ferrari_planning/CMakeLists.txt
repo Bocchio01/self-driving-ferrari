@@ -35,22 +35,27 @@ rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typ
 # ==========================================
 # Target global_planner_node
 # ==========================================
-# add_executable(global_planner_node src/global_planner.cpp)
-# target_include_directories(global_planner_node PUBLIC include)
-# target_link_libraries(global_planner_node
-#     PRIVATE
-#     rclcpp::rclcpp
-#     nav_msgs::nav_msgs
-#     tf2::tf2
-#     tf2_ros::tf2_ros
-#     tf2_geometry_msgs::tf2_geometry_msgs
-# )
+add_executable(global_planner_node src/global_planner.cpp)
+target_link_libraries(global_planner_node
+    PRIVATE
+    planning_core
+    rclcpp::rclcpp
+    nav_msgs::nav_msgs
+    geometry_msgs::geometry_msgs
+    tf2::tf2
+    tf2_ros::tf2_ros
+    tf2_geometry_msgs::tf2_geometry_msgs
+)
+
+add_library(planning_core src/hybrid_astar.cpp src/avoidance.cpp)
+target_include_directories(planning_core PUBLIC include)
 
 # ==========================================
 # Target local_planner_node
 # ==========================================
 add_executable(local_planner_node src/local_planner.cpp)
 target_include_directories(local_planner_node PUBLIC include)
+target_link_libraries(local_planner_node PRIVATE planning_core)
 target_link_libraries(local_planner_node
     PRIVATE
     rclcpp::rclcpp
@@ -79,8 +84,14 @@ target_link_libraries(trajectory_generator_node
 # ==========================================
 # Installation
 # ==========================================
+install(TARGETS planning_core
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
 install(TARGETS
-    # global_planner_node
+    global_planner_node
     local_planner_node
     trajectory_generator_node
     DESTINATION lib/${PROJECT_NAME}
@@ -113,6 +124,10 @@ if(BUILD_TESTING)
     set(ament_cmake_copyright_FOUND TRUE)
     set(ament_cmake_cpplint_FOUND TRUE)
     ament_lint_auto_find_test_dependencies()
+
+    find_package(ament_cmake_gtest REQUIRED)
+    ament_add_gtest(test_planning test/test_planning.cpp)
+    target_link_libraries(test_planning planning_core)
 endif()
 
 ament_package()

@@ -11,6 +11,8 @@ from launch_ros.actions import Node
 def generate_launch_description():
     vehicle_config_arg = DeclareLaunchArgument("vehicle_config")
     vehicle_config = LaunchConfiguration("vehicle_config")
+    global_planner_arg = DeclareLaunchArgument("global_planner", default_value="mock")
+    global_planner = LaunchConfiguration("global_planner")
 
     mock_global_planner_node = Node(
         package="ferrari_planning",
@@ -18,6 +20,7 @@ def generate_launch_description():
         name="mock_global_planner_node",
         namespace="planning",
         output="screen",
+        condition=IfCondition(PythonExpression(["'", global_planner, "' == 'mock'"])),
         remappings=[
             ("odom", "/localization/odom"),
         ],
@@ -31,6 +34,20 @@ def generate_launch_description():
         ],
     )
 
+    hybrid_global_planner_node = Node(
+        package="ferrari_planning",
+        executable="global_planner_node",
+        name="global_planner_node",
+        namespace="planning",
+        output="screen",
+        condition=IfCondition(PythonExpression(["'", global_planner, "' == 'hybrid'"])),
+        remappings=[
+            ("goal_pose", "/goal_pose"),
+            ("global_costmap", "/mapping/global_costmap"),
+        ],
+        parameters=[vehicle_config],
+    )
+
     local_planner_node = Node(
         package="ferrari_planning",
         executable="local_planner_node",
@@ -39,6 +56,7 @@ def generate_launch_description():
         output="screen",
         remappings=[
             ("odom", "/localization/odom"),
+            ("local_costmap", "/mapping/local_costmap"),
         ],
         parameters=[
             {
@@ -70,7 +88,9 @@ def generate_launch_description():
     return LaunchDescription(
         [
             vehicle_config_arg,
+            global_planner_arg,
             mock_global_planner_node,
+            hybrid_global_planner_node,
             local_planner_node,
             trajectory_generator_node,
             # visualizer_node,
